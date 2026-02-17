@@ -1,1 +1,1 @@
-﻿ALTER TABLE fsbo_leads ALTER COLUMN kredi TYPE VARCHAR(50), ALTER COLUMN balkon TYPE VARCHAR(30), ALTER COLUMN esyali TYPE VARCHAR(30), ALTER COLUMN site_icinde TYPE VARCHAR(30), ALTER COLUMN takas TYPE VARCHAR(30), ALTER COLUMN banyo TYPE VARCHAR(20), ALTER COLUMN kat_sayisi TYPE VARCHAR(20), ALTER COLUMN telefon TYPE VARCHAR(50);
+UPDATE fsbo_call_logs SET randevu_notu = 'Dairede yerinde degerleme gorusmesi - Avenir Talas 180 A Blok' WHERE randevu_alindi = true;
