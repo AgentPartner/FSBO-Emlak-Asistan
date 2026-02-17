@@ -771,7 +771,7 @@ async function saveAppt(ilanId,idx){
   const note=document.getElementById('appt-note-'+idx).value;
   const btn=event.target;btn.textContent='⏳...';btn.disabled=true;
   try{
-    const res=await fetch('https://n8n.agentpartner.pro/webhook/fsbo-randevu-guncelle',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ilan_id:ilanId,randevu_tarihi:dt||null,randevu_notu:note})});
+    const res=await fetch(STATUS_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ilan_id:ilanId,randevu_tarihi:dt||null,randevu_notu:note})});
     if(res.ok){btn.textContent='✅ Tamam';setTimeout(()=>loadData(),1000);}
     else{btn.textContent='❌ Hata';btn.disabled=false;}
   }catch(e){btn.textContent='❌ Hata';btn.disabled=false;}
