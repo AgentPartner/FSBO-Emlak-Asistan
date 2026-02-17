@@ -100,11 +100,15 @@
 
 ---
 
+## ✅ ÇÖZÜLEN SORUNLAR
+- ~~SIP Trunk 503 hatası~~ → ÇÖZÜLDÜ (17 Şubat'tan itibaren aramalar başarıyla geçiyor)
+- Son başarılı aramalar: 17.02 16:14, 17.02 16:00, 16.02 20:40
+- Randevu düzenleme → STATUS_API'ye entegre edildi, ayrı workflow kaldırıldı
+
 ## 🔧 YAPILACAKLAR
 
 ### 🔴 Acil
-- SIP Trunk 503 hatası çözümü (Netgsm destek: 444 0 220)
-- Randevu düzenleme test
+- Randevu düzenleme dashboard'dan test edilmeli
 
 ### 🟡 Orta
 - Vapi'den randevu tarihi otomatik parse
