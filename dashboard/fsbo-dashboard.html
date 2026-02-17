@@ -723,29 +723,24 @@ function cycleSpeed(i){
 }
 function filterCalls(){if(!allData||!allData.calls)return;const q=document.getElementById('callSearch').value.toLowerCase();const f=allData.calls.filter(x=>(x.ilan_sahibi||'').toLowerCase().includes(q)||(x.baslik||'').toLowerCase().includes(q)||(x.ilan_id||'').toLowerCase().includes(q)||(x.ozet||'').toLowerCase().includes(q));renderCalls(f);}
 function renderAppointments(a){
-  // Merge: separate appointments table + calls with randevu
   const calls=allData.calls||[];
   const randevuCalls=calls.filter(c=>c.randevu_alindi||c.durum==='Randevu alindi'||(c.durum||'').toLowerCase().includes('randevu'));
-  // Build combined list
   let items=[];
-  // From appointments table (if exists)
-  if(a&&a.length){a.forEach(x=>{items.push({type:'appointment',randevu_tarihi:x.randevu_tarihi,randevu_turu:x.randevu_turu||'Değerleme',konum:x.konum||'-',durum:x.durum||'bekliyor',baslik:x.baslik||'-',ilan_sahibi:x.ilan_sahibi||'-',telefon:x.telefon||'',ilan_id:x.ilan_id||x.lead_id||'-',atanan:x.atanan_personel||'-',notlar:x.sonuc_notu||'',arama_tarihi:x.created_at});});}
-  // From call logs
+  if(a&&a.length){a.forEach(x=>{items.push({type:'appointment',randevu_tarihi:x.randevu_tarihi,randevu_turu:x.randevu_turu||'Değerleme',konum:x.konum||'-',durum:x.durum||'bekliyor',baslik:x.baslik||'-',ilan_sahibi:x.ilan_sahibi||'-',telefon:x.telefon||'',ilan_id:x.ilan_id||x.lead_id||'-',notlar:x.sonuc_notu||'',arama_tarihi:x.created_at,call_id:x.call_log_id||''});});}
   randevuCalls.forEach(c=>{
-    // Check if already in appointments
     const exists=items.some(i=>i.ilan_id===c.ilan_id);
-    items.push({type:'call',randevu_tarihi:c.randevu_tarihi||null,randevu_turu:'Değerleme',konum:c.randevu_notu||'-',durum:c.randevu_alindi?'onaylandi':'bekliyor',baslik:c.baslik||'-',ilan_sahibi:c.ilan_sahibi||'-',telefon:c.telefon||'',ilan_id:c.ilan_id||'-',atanan:'-',notlar:c.randevu_notu||c.ozet||c.sonraki_adim||'',arama_tarihi:c.created_at,recording_url:c.recording_url,sure_saniye:c.sure_saniye,maliyet:c.maliyet,duplicate:exists});
+    items.push({type:'call',randevu_tarihi:c.randevu_tarihi||null,randevu_turu:'Değerleme',konum:c.randevu_notu||'',durum:c.randevu_alindi?'onaylandi':'bekliyor',baslik:c.baslik||'-',ilan_sahibi:c.ilan_sahibi||'-',telefon:c.telefon||'',ilan_id:c.ilan_id||'-',notlar:c.randevu_notu||c.ozet||'',arama_tarihi:c.created_at,call_id:c.id||'',duplicate:exists});
   });
-  // Remove duplicates (keep appointment version)
   items=items.filter(i=>!i.duplicate);
   if(!items.length){document.getElementById('appointmentsContent').innerHTML='<div class="empty"><div class="empty-icon">📅</div>Henüz randevu yok</div>';return;}
-  // Sort by date desc
   items.sort((a,b)=>new Date(b.arama_tarihi||0)-new Date(a.arama_tarihi||0));
-  let html=`<div style="overflow-x:auto"><table><thead><tr><th>📅 RANDEVU TARİHİ</th><th>İLAN</th><th>KİŞİ</th><th>TELEFON</th><th>TÜR</th><th>KONUM / NOT</th><th>DURUM</th></tr></thead><tbody>`;
-  items.forEach(x=>{
-    const rdTarih=x.randevu_tarihi?formatDate(x.randevu_tarihi):'<span style="color:var(--orange);font-size:11px">⏳ Belirlenmedi</span>';
+  let html=`<div style="overflow-x:auto"><table><thead><tr><th>📅 RANDEVU TARİHİ</th><th>İLAN</th><th>KİŞİ</th><th>TELEFON</th><th>TÜR</th><th>KONUM / NOT</th><th>DURUM</th><th>İŞLEM</th></tr></thead><tbody>`;
+  items.forEach((x,idx)=>{
+    const dt=x.randevu_tarihi?new Date(x.randevu_tarihi):null;
+    const dtVal=dt?dt.toISOString().slice(0,16):'';
+    const rdTarih=dt?formatDate(x.randevu_tarihi):'<span style="color:var(--orange);font-size:11px">⏳ Belirlenmedi</span>';
     const rdDurum=x.durum==='onaylandi'||x.durum==='bekliyor'?'<span class="badge badge-randevu_alindi">✅ Onaylandı</span>':badge(x.durum);
-    html+=`<tr>
+    html+=`<tr id="appt-row-${idx}">
       <td style="font-weight:700;color:var(--green)">${rdTarih}</td>
       <td><div style="font-weight:600">${x.ilan_id}</div><div style="font-size:11px;color:var(--text2)">${x.baslik}</div></td>
       <td style="font-weight:500">${x.ilan_sahibi}</td>
@@ -753,10 +748,33 @@ function renderAppointments(a){
       <td><span style="font-size:12px">${x.randevu_turu}</span></td>
       <td style="font-size:12px;max-width:250px" title="${(x.notlar||'').replace(/"/g,'&quot;')}">${x.notlar||'-'}</td>
       <td>${rdDurum}</td>
-    </tr>`;
+      <td><button onclick="editAppt(${idx})" style="background:var(--accent);color:#fff;border:none;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer">✏️ Düzenle</button></td>
+    </tr>
+    <tr id="appt-edit-${idx}" style="display:none;background:var(--surface2)"><td colspan="8" style="padding:16px 20px">
+      <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:end">
+        <div style="flex:1;min-width:200px"><label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">📅 Randevu Tarih & Saat</label><input type="datetime-local" id="appt-dt-${idx}" value="${dtVal}" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px"></div>
+        <div style="flex:2;min-width:250px"><label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">📍 Konum / Not</label><input type="text" id="appt-note-${idx}" value="${(x.notlar||'').replace(/"/g,'&quot;')}" placeholder="Örn: Dairede yerinde değerleme - Avenir Talas 180 A Blok" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px"></div>
+        <div style="display:flex;gap:8px">
+          <button onclick="saveAppt('${x.ilan_id}',${idx})" style="background:var(--green);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">💾 Kaydet</button>
+          <button onclick="cancelAppt(${idx})" style="background:var(--surface);color:var(--text2);border:1px solid var(--border);padding:8px 16px;border-radius:8px;font-size:12px;cursor:pointer">İptal</button>
+        </div>
+      </div>
+    </td></tr>`;
   });
   html+='</tbody></table></div>';
   document.getElementById('appointmentsContent').innerHTML=html;
+}
+function editAppt(idx){document.getElementById('appt-edit-'+idx).style.display='table-row';}
+function cancelAppt(idx){document.getElementById('appt-edit-'+idx).style.display='none';}
+async function saveAppt(ilanId,idx){
+  const dt=document.getElementById('appt-dt-'+idx).value;
+  const note=document.getElementById('appt-note-'+idx).value;
+  const btn=event.target;btn.textContent='⏳...';btn.disabled=true;
+  try{
+    const res=await fetch('https://n8n.agentpartner.pro/webhook/fsbo-randevu-guncelle',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ilan_id:ilanId,randevu_tarihi:dt||null,randevu_notu:note})});
+    if(res.ok){btn.textContent='✅ Tamam';setTimeout(()=>loadData(),1000);}
+    else{btn.textContent='❌ Hata';btn.disabled=false;}
+  }catch(e){btn.textContent='❌ Hata';btn.disabled=false;}
 }
 
 // REPORT FUNCTIONS
