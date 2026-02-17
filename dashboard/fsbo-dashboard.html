@@ -723,15 +723,41 @@ function cycleSpeed(i){
 }
 function filterCalls(){if(!allData||!allData.calls)return;const q=document.getElementById('callSearch').value.toLowerCase();const f=allData.calls.filter(x=>(x.ilan_sahibi||'').toLowerCase().includes(q)||(x.baslik||'').toLowerCase().includes(q)||(x.ilan_id||'').toLowerCase().includes(q)||(x.ozet||'').toLowerCase().includes(q));renderCalls(f);}
 function renderAppointments(a){
-  // If no separate appointments data, derive from calls with randevu status
-  if(!a||!a.length){
-    const calls=allData.calls||[];
-    const randevuCalls=calls.filter(c=>c.randevu_alindi||c.durum==='Randevu alindi'||(c.durum||'').toLowerCase().includes('randevu'));
-    if(!randevuCalls.length){document.getElementById('appointmentsContent').innerHTML='<div class="empty"><div class="empty-icon">📅</div>Henüz randevu yok</div>';return;}
-    document.getElementById('appointmentsContent').innerHTML=`<div style="overflow-x:auto"><table><thead><tr><th>TARİH</th><th>İLAN</th><th>KİŞİ</th><th>TELEFON</th><th>SÜRE</th><th>MALİYET</th><th>DURUM</th></tr></thead><tbody>${randevuCalls.map(x=>`<tr><td>${formatDate(x.created_at)}</td><td><div style="font-weight:600">${x.ilan_id||'-'}</div><div style="font-size:11px;color:var(--text2)">${x.baslik||''}</div></td><td>${x.ilan_sahibi||'-'}</td><td>${formatPhone(x.telefon)}</td><td>${formatDuration(x.sure_saniye)}</td><td style="color:var(--green);font-weight:600">$${(x.maliyet||0).toFixed(2)}</td><td><span class="badge badge-randevu_alindi">✅ Randevu</span></td></tr>`).join('')}</tbody></table></div>`;
-    return;
-  }
-  document.getElementById('appointmentsContent').innerHTML=`<div style="overflow-x:auto"><table><thead><tr><th>Tarih</th><th>İlan</th><th>Kişi</th><th>Tür</th><th>Konum</th><th>Durum</th></tr></thead><tbody>${a.map(x=>`<tr><td>${formatDate(x.randevu_tarihi)}</td><td>${x.baslik||'-'}</td><td>${x.ilan_sahibi||'-'}</td><td>${x.randevu_turu||'-'}</td><td>${x.konum||'-'}</td><td>${badge(x.durum)}</td></tr>`).join('')}</tbody></table></div>`;
+  // Merge: separate appointments table + calls with randevu
+  const calls=allData.calls||[];
+  const randevuCalls=calls.filter(c=>c.randevu_alindi||c.durum==='Randevu alindi'||(c.durum||'').toLowerCase().includes('randevu'));
+  // Build combined list
+  let items=[];
+  // From appointments table (if exists)
+  if(a&&a.length){a.forEach(x=>{items.push({type:'appointment',randevu_tarihi:x.randevu_tarihi,randevu_turu:x.randevu_turu||'Değerleme',konum:x.konum||'-',durum:x.durum||'bekliyor',baslik:x.baslik||'-',ilan_sahibi:x.ilan_sahibi||'-',telefon:x.telefon||'',ilan_id:x.ilan_id||x.lead_id||'-',atanan:x.atanan_personel||'-',notlar:x.sonuc_notu||'',arama_tarihi:x.created_at});});}
+  // From call logs
+  randevuCalls.forEach(c=>{
+    // Check if already in appointments
+    const exists=items.some(i=>i.ilan_id===c.ilan_id);
+    items.push({type:'call',randevu_tarihi:c.randevu_tarihi||null,randevu_turu:'Değerleme',konum:'-',durum:c.randevu_alindi?'onaylandi':'bekliyor',baslik:c.baslik||'-',ilan_sahibi:c.ilan_sahibi||'-',telefon:c.telefon||'',ilan_id:c.ilan_id||'-',atanan:'-',notlar:c.ozet||c.sonraki_adim||'',arama_tarihi:c.created_at,recording_url:c.recording_url,sure_saniye:c.sure_saniye,maliyet:c.maliyet,duplicate:exists});
+  });
+  // Remove duplicates (keep appointment version)
+  items=items.filter(i=>!i.duplicate);
+  if(!items.length){document.getElementById('appointmentsContent').innerHTML='<div class="empty"><div class="empty-icon">📅</div>Henüz randevu yok</div>';return;}
+  // Sort by date desc
+  items.sort((a,b)=>new Date(b.arama_tarihi||0)-new Date(a.arama_tarihi||0));
+  let html=`<div style="overflow-x:auto"><table><thead><tr><th>RANDEVU TARİHİ</th><th>İLAN</th><th>KİŞİ</th><th>TELEFON</th><th>TÜR</th><th>ARAMA TARİHİ</th><th>DURUM</th><th>DETAY</th></tr></thead><tbody>`;
+  items.forEach(x=>{
+    const rdTarih=x.randevu_tarihi?formatDate(x.randevu_tarihi):'<span style="color:var(--orange);font-size:11px">⏳ Belirlenmedi</span>';
+    const rdDurum=x.durum==='onaylandi'||x.durum==='bekliyor'?'<span class="badge badge-randevu_alindi">✅ Onaylandı</span>':badge(x.durum);
+    html+=`<tr>
+      <td style="font-weight:700;color:var(--green)">${rdTarih}</td>
+      <td><div style="font-weight:600">${x.ilan_id}</div><div style="font-size:11px;color:var(--text2)">${x.baslik}</div></td>
+      <td style="font-weight:500">${x.ilan_sahibi}</td>
+      <td>${x.telefon?`<a class="phone-link" href="tel:${x.telefon}">${formatPhone(x.telefon)}</a>`:'-'}</td>
+      <td><span style="font-size:12px">${x.randevu_turu}</span></td>
+      <td style="font-size:12px;color:var(--text2)">${formatDate(x.arama_tarihi)}</td>
+      <td>${rdDurum}</td>
+      <td style="font-size:11px;color:var(--text2);max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${(x.notlar||'').replace(/"/g,'&quot;')}">${x.notlar||'-'}</td>
+    </tr>`;
+  });
+  html+='</tbody></table></div>';
+  document.getElementById('appointmentsContent').innerHTML=html;
 }
 
 // REPORT FUNCTIONS
