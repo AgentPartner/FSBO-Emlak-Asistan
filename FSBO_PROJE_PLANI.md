@@ -142,7 +142,7 @@ Sahibinden.com'dan ilan detaylarını çekip DB'ye kaydediyor.
 | **Netgsm SIP User** | `8503033860` / Pass: `u8JWKKcYD9Y3` / Server: `sip.netgsm.com.tr:5060` |
 | **n8n Vapi Credential** | ID: `g8lOTMaAD5DD4k8a` (Header Auth) |
 | **n8n Postgres Credential** | ID: `nmP7dbHwgdJq9OTf` |
-| **GitHub Token** | `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` |
+| **GitHub Token** | `.git/config` içinde kayıtlı (push protection nedeniyle buraya yazılmıyor) |
 | **SSH** | Key: `C:\Users\mimar\.ssh\id_rsa` → `root@46.224.146.57` |
 
 ---
