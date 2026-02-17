@@ -909,7 +909,7 @@ async function submitLead(){
 
 async function loadData(){
   const btn=document.querySelector('.refresh-btn');btn.classList.add('loading');
-  try{const res=await fetch(API);const json=await res.json();const d=json[0]?.data||json.data;allData=d;renderSummary(d.summary);renderLeads(d.leads);renderCalls(d.calls);renderAppointments(d.appointments);renderReport();renderTrendChart();renderPieChart();renderCostStats();document.getElementById('lastUpdate').textContent='Son: '+new Date().toLocaleTimeString('tr-TR');}
+  try{const res=await fetch(API);const json=await res.json();const d=json[0]?.data||json.data;allData=d;renderSummary(d.summary);renderLeads(d.leads);const audioPlaying=document.querySelector('audio')&&[...document.querySelectorAll('audio')].some(a=>!a.paused);const callDetailOpen=document.querySelector('.call-expand.open');if(!audioPlaying&&!callDetailOpen){renderCalls(d.calls);}renderAppointments(d.appointments);renderReport();renderTrendChart();renderPieChart();renderCostStats();document.getElementById('lastUpdate').textContent='Son: '+new Date().toLocaleTimeString('tr-TR');}
   catch(e){console.error(e);document.getElementById('lastUpdate').textContent='Hata: '+e.message;}
   btn.classList.remove('loading');document.getElementById('loading').classList.add('hidden');
 }
