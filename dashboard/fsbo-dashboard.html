@@ -734,14 +734,14 @@ function renderAppointments(a){
   randevuCalls.forEach(c=>{
     // Check if already in appointments
     const exists=items.some(i=>i.ilan_id===c.ilan_id);
-    items.push({type:'call',randevu_tarihi:c.randevu_tarihi||null,randevu_turu:'Değerleme',konum:'-',durum:c.randevu_alindi?'onaylandi':'bekliyor',baslik:c.baslik||'-',ilan_sahibi:c.ilan_sahibi||'-',telefon:c.telefon||'',ilan_id:c.ilan_id||'-',atanan:'-',notlar:c.ozet||c.sonraki_adim||'',arama_tarihi:c.created_at,recording_url:c.recording_url,sure_saniye:c.sure_saniye,maliyet:c.maliyet,duplicate:exists});
+    items.push({type:'call',randevu_tarihi:c.randevu_tarihi||null,randevu_turu:'Değerleme',konum:c.randevu_notu||'-',durum:c.randevu_alindi?'onaylandi':'bekliyor',baslik:c.baslik||'-',ilan_sahibi:c.ilan_sahibi||'-',telefon:c.telefon||'',ilan_id:c.ilan_id||'-',atanan:'-',notlar:c.randevu_notu||c.ozet||c.sonraki_adim||'',arama_tarihi:c.created_at,recording_url:c.recording_url,sure_saniye:c.sure_saniye,maliyet:c.maliyet,duplicate:exists});
   });
   // Remove duplicates (keep appointment version)
   items=items.filter(i=>!i.duplicate);
   if(!items.length){document.getElementById('appointmentsContent').innerHTML='<div class="empty"><div class="empty-icon">📅</div>Henüz randevu yok</div>';return;}
   // Sort by date desc
   items.sort((a,b)=>new Date(b.arama_tarihi||0)-new Date(a.arama_tarihi||0));
-  let html=`<div style="overflow-x:auto"><table><thead><tr><th>RANDEVU TARİHİ</th><th>İLAN</th><th>KİŞİ</th><th>TELEFON</th><th>TÜR</th><th>ARAMA TARİHİ</th><th>DURUM</th><th>DETAY</th></tr></thead><tbody>`;
+  let html=`<div style="overflow-x:auto"><table><thead><tr><th>📅 RANDEVU TARİHİ</th><th>İLAN</th><th>KİŞİ</th><th>TELEFON</th><th>TÜR</th><th>KONUM / NOT</th><th>DURUM</th></tr></thead><tbody>`;
   items.forEach(x=>{
     const rdTarih=x.randevu_tarihi?formatDate(x.randevu_tarihi):'<span style="color:var(--orange);font-size:11px">⏳ Belirlenmedi</span>';
     const rdDurum=x.durum==='onaylandi'||x.durum==='bekliyor'?'<span class="badge badge-randevu_alindi">✅ Onaylandı</span>':badge(x.durum);
@@ -751,9 +751,8 @@ function renderAppointments(a){
       <td style="font-weight:500">${x.ilan_sahibi}</td>
       <td>${x.telefon?`<a class="phone-link" href="tel:${x.telefon}">${formatPhone(x.telefon)}</a>`:'-'}</td>
       <td><span style="font-size:12px">${x.randevu_turu}</span></td>
-      <td style="font-size:12px;color:var(--text2)">${formatDate(x.arama_tarihi)}</td>
+      <td style="font-size:12px;max-width:250px" title="${(x.notlar||'').replace(/"/g,'&quot;')}">${x.notlar||'-'}</td>
       <td>${rdDurum}</td>
-      <td style="font-size:11px;color:var(--text2);max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${(x.notlar||'').replace(/"/g,'&quot;')}">${x.notlar||'-'}</td>
     </tr>`;
   });
   html+='</tbody></table></div>';
