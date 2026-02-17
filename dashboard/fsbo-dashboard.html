@@ -55,6 +55,8 @@ tbody tr{transition:background .15s;cursor:pointer}tbody tr:hover{background:var
 .badge-ilgilenmiyor{background:rgba(239,68,68,.15);color:var(--red)}.badge-ilgilenmiyor::before{background:var(--red)}
 .badge-aranmayacak{background:rgba(148,163,184,.15);color:var(--text2)}.badge-aranmayacak::before{background:var(--text2)}
 .badge-tekrar_aranacak{background:rgba(251,146,60,.15);color:#fb923c}.badge-tekrar_aranacak::before{background:#fb923c}
+.lead-tab{background:none;border:none;color:var(--text2);padding:12px 20px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;border-bottom:2px solid transparent;transition:all .2s}
+.lead-tab:hover{color:var(--text)}.lead-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
 .badge-satilik{background:rgba(16,185,129,.12);color:var(--green);font-size:11px;padding:2px 8px}
 .badge-kiralik{background:rgba(245,158,11,.12);color:var(--orange);font-size:11px;padding:2px 8px}
 .action-btn{background:var(--accent);border:none;color:white;padding:6px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;transition:all .2s}
@@ -243,7 +245,8 @@ tbody tr{transition:background .15s;cursor:pointer}tbody tr:hover{background:var
   </div>
   <div class="section" id="sec-leads">
     <div class="table-container">
-      <div class="table-header"><h2>📋 Tüm İlanlar</h2><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><div id="bulkBar" style="display:none;background:var(--red);padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;white-space:nowrap" onclick="bulkDelete()">🗑️ <span id="bulkCount">0</span> ilan sil</div><select id="leadDurum" onchange="filterLeads()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:8px;font-size:12px"><option value="">Tüm Durumlar</option><option value="yeni">🔵 Yeni</option><option value="aktarildi">🟢 Aktarıldı</option><option value="aranacak">📞 Aranacak</option><option value="arama_yapildi">🟣 Arama Yapıldı</option><option value="randevu">✅ Randevu</option><option value="ilgilenmiyor">🔴 İlgilenmiyor</option><option value="tekrar_aranacak">🔄 Tekrar Aranacak</option><option value="aranmayacak">⚫ Aranmayacak</option></select><select id="leadKategori" onchange="filterLeads()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:8px;font-size:12px"><option value="">Tüm Kategoriler</option></select><select id="leadIslem" onchange="filterLeads()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:8px;font-size:12px"><option value="">Tüm İşlemler</option><option value="satilik">Satılık</option><option value="kiralik">Kiralık</option></select><input type="text" class="table-search" placeholder="İlan ara..." id="leadSearch" oninput="filterLeads()"><button class="action-btn" style="background:var(--orange);color:#000;font-weight:700" onclick="openBatchCallModal()">📞 Toplu Arama</button><button class="action-btn" onclick="openModal()">+ Yeni İlan</button></div></div>
+      <div class="table-header"><h2>📋 Tüm İlanlar</h2><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><div id="bulkBar" style="display:none;background:var(--red);padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;white-space:nowrap" onclick="bulkDelete()">🗑️ <span id="bulkCount">0</span> ilan sil</div><select id="leadDurum" onchange="filterLeads()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:8px;font-size:12px"></select><select id="leadKategori" onchange="filterLeads()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:8px;font-size:12px"><option value="">Tüm Kategoriler</option></select><select id="leadIslem" onchange="filterLeads()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:8px;font-size:12px"><option value="">Tüm İşlemler</option><option value="satilik">Satılık</option><option value="kiralik">Kiralık</option></select><input type="text" class="table-search" placeholder="İlan ara..." id="leadSearch" oninput="filterLeads()"><button class="action-btn" style="background:var(--orange);color:#000;font-weight:700" onclick="openBatchCallModal()">📞 Toplu Arama</button><button class="action-btn" onclick="openModal()">+ Yeni İlan</button></div></div>
+      <div style="display:flex;gap:0;padding:0 20px;border-bottom:1px solid var(--border)"><button class="lead-tab active" id="tabAktif" onclick="switchLeadTab('aktif')">✅ Aktif <span id="tabAktifCount" style="background:var(--accent);color:#fff;padding:1px 8px;border-radius:10px;font-size:11px;margin-left:4px">0</span></button><button class="lead-tab" id="tabPasif" onclick="switchLeadTab('pasif')">⛔ Pasif <span id="tabPasifCount" style="background:var(--text2);color:#fff;padding:1px 8px;border-radius:10px;font-size:11px;margin-left:4px">0</span></button></div>
       <div id="batchProgress" style="display:none;padding:12px 20px;background:linear-gradient(135deg,rgba(245,158,11,.1),rgba(59,130,246,.1));border-bottom:1px solid var(--border)"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span id="batchStatusText" style="font-size:13px;font-weight:600">📞 Toplu arama devam ediyor...</span><button onclick="cancelBatchCall()" style="background:var(--red);color:#fff;border:none;padding:4px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">⏹ Durdur</button></div><div style="background:var(--surface2);border-radius:8px;height:8px;overflow:hidden"><div id="batchProgressBar" style="height:100%;background:linear-gradient(90deg,var(--orange),var(--green));border-radius:8px;transition:width .5s ease;width:0%"></div></div><div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--text2)"><span id="batchDetail">0/0 arandı</span><span id="batchEta">Tahmini süre: -</span></div></div>
       <div style="overflow-x:auto"><table><thead><tr><th style="width:32px"><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)"></th><th>İlan ID</th><th>Başlık</th><th>İşlem</th><th>Tip</th><th>Fiyat</th><th>İl / İlçe</th><th>Telefon</th><th>İlan Sahibi</th><th>İlan Tarihi</th><th>Kayıt</th><th>Durum</th></tr></thead><tbody id="leadsTable"></tbody></table></div>
     </div>
@@ -595,22 +598,51 @@ function renderLeads(leads){
   katSel.innerHTML='<option value="">Tüm Kategoriler</option>'+kats.map(k=>`<option value="${k}"${k===curKat?' selected':''}>${k}</option>`).join('');
   window._allLeads=leads;
   renderGeriAramaUyari(leads);
+  updateDurumDropdown();
   filterLeads();
 }
+let currentLeadTab='aktif';
+const aktifDurumlar=['yeni','aktarildi','aktarıldı','aranacak','arama_yapildi','arandı','randevu','tekrar_aranacak'];
+const pasifDurumlar=['ilgilenmiyor','aranmayacak'];
+
+function switchLeadTab(tab){
+  currentLeadTab=tab;
+  document.getElementById('tabAktif').classList.toggle('active',tab==='aktif');
+  document.getElementById('tabPasif').classList.toggle('active',tab==='pasif');
+  updateDurumDropdown();
+  filterLeads();
+}
+
+function updateDurumDropdown(){
+  const sel=document.getElementById('leadDurum');
+  const val=sel.value;
+  if(currentLeadTab==='aktif'){
+    sel.innerHTML='<option value="">Tüm Aktif</option><option value="yeni">🔵 Yeni</option><option value="aktarildi">🟢 Aktarıldı</option><option value="aranacak">📞 Aranacak</option><option value="arama_yapildi">🟣 Arama Yapıldı</option><option value="randevu">✅ Randevu</option><option value="tekrar_aranacak">🔄 Tekrar Aranacak</option>';
+  } else {
+    sel.innerHTML='<option value="">Tüm Pasif</option><option value="ilgilenmiyor">🔴 İlgilenmiyor</option><option value="aranmayacak">⚫ Aranmayacak</option>';
+  }
+}
+
 function filterLeads(){
   const leads=window._allLeads||[];
   const q=(document.getElementById('leadSearch').value||'').toLowerCase();
   const kat=document.getElementById('leadKategori').value;
   const islem=document.getElementById('leadIslem').value;
   const durum=document.getElementById('leadDurum').value;
+  const tabDurumlar=currentLeadTab==='aktif'?aktifDurumlar:pasifDurumlar;
   const filtered=leads.filter(l=>{
+    if(!tabDurumlar.includes(l.durum||'yeni'))return false;
     if(kat&&l.mulk_tipi!==kat)return false;
     if(islem&&l.islem_turu!==islem)return false;
     if(durum&&l.durum!==durum&&!(durum==='aktarildi'&&l.durum==='aktarıldı'))return false;
     if(q){const t=((l.ilan_id||'')+(l.baslik||'')+(l.il||'')+(l.ilce||'')+(l.telefon||'')+(l.ilan_sahibi||'')).toLowerCase();if(t.indexOf(q)===-1)return false;}
     return true;
   });
-  document.getElementById('overviewLeads').innerHTML=filtered.slice(0,8).map(l=>leadRow(l,false)).join('');
+  const aktifCount=leads.filter(l=>aktifDurumlar.includes(l.durum||'yeni')).length;
+  const pasifCount=leads.filter(l=>pasifDurumlar.includes(l.durum||'yeni')).length;
+  document.getElementById('tabAktifCount').textContent=aktifCount;
+  document.getElementById('tabPasifCount').textContent=pasifCount;
+  document.getElementById('overviewLeads').innerHTML=leads.filter(l=>aktifDurumlar.includes(l.durum||'yeni')).slice(0,8).map(l=>leadRow(l,false)).join('');
   document.getElementById('leadsTable').innerHTML=filtered.map(l=>leadRow(l,true)).join('');
 }
 function formatDuration(s){if(!s||s===0)return'-';const m=Math.floor(s/60);const sec=s%60;return m>0?`${m}dk ${sec}sn`:`${sec}sn`;}
