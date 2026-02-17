@@ -1,0 +1,23 @@
+{
+  "name": "Ayşe - Emlak Danışmanı",
+  "model": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-20250514",
+    "temperature": 0.7,
+    "maxTokens": 1024
+  },
+  "voice": {
+    "provider": "elevenlabs",
+    "voiceId": "21m00Tcm4TlvDq8ikWAM",
+    "stability": 0.5,
+    "similarityBoost": 0.75,
+    "model": "eleven_turbo_v2_5"
+  },
+  "firstMessage": "Merhaba, ben Ayşe, Prestij Emlak'tan arıyorum. Sahibinden'deki ilanınızı gördüm. Kısa bir dakikanız var mı?",
+  "silenceTimeoutSeconds": 30,
+  "maxDurationSeconds": 600,
+  "backgroundSound": "office",
+  "recordingEnabled": true,
+  "endCallMessage": "Görüşmek üzere, iyi günler!",
+  "serverUrl": "https://n8n.agentpartner.pro/webhook/vapi-callback"
+}

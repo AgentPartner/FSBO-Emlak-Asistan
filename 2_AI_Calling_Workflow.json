@@ -1,0 +1,58 @@
+{
+  "name": "📞 FSBO AI Calling",
+  "nodes": [
+    {
+      "parameters": {"rule": {"interval": [{"field": "cronExpression", "expression": "0 10,14 * * 1-6"}]}},
+      "id": "schedule", "name": "⏰ 10:00 & 14:00", "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2, "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM leads WHERE durum IN ('yeni','tekrar_ara') AND arama_sayisi < 3 AND telefon IS NOT NULL ORDER BY lead_score DESC LIMIT 50"
+      },
+      "id": "get-leads", "name": "📋 Aranacak Leads", "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5, "position": [220, 0]
+    },
+    {
+      "parameters": {"batchSize": 1},
+      "id": "split", "name": "🔀 Teker Teker", "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3, "position": [440, 0]
+    },
+    {
+      "parameters": {"amount": 30, "unit": "seconds"},
+      "id": "wait", "name": "⏳ 30sn Bekle", "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1, "position": [660, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead = $input.first().json;\nconst prompt = `Sen emlak danışmanı Ayşe. ${lead.il} ${lead.ilce}'deki mülk için ara. Randevu almaya çalış.`;\nreturn [{json: {...lead, system_prompt: prompt, first_message: `Merhaba, ben Ayşe, Prestij Emlak'tan. ${lead.il}'deki ilanınızı gördüm.`}}];"
+      },
+      "id": "prompt", "name": "🧠 Prompt Hazırla", "type": "n8n-nodes-base.code",
+      "typeVersion": 2, "position": [880, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST", "url": "https://api.vapi.ai/call/phone",
+        "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth",
+        "sendBody": true, "specifyBody": "json",
+        "jsonBody": "={\"phoneNumberId\":\"{{$env.VAPI_PHONE_NUMBER_ID}}\",\"customer\":{\"number\":\"+90{{$json.telefon}}\"},\"assistant\":{\"model\":{\"provider\":\"anthropic\",\"model\":\"claude-sonnet-4-20250514\",\"systemPrompt\":{{JSON.stringify($json.system_prompt)}}},\"voice\":{\"provider\":\"elevenlabs\",\"voiceId\":\"pNInz6obpgDQGcFmaJgB\"},\"firstMessage\":{{JSON.stringify($json.first_message)}},\"recordingEnabled\":true}}"
+      },
+      "id": "vapi", "name": "📞 Vapi Arama", "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2, "position": [1100, 0]
+    },
+    {
+      "parameters": {"operation": "update", "table": "leads", "updateKey": "ilan_id"},
+      "id": "update", "name": "📝 Güncelle", "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5, "position": [1320, 0]
+    }
+  ],
+  "connections": {
+    "⏰ 10:00 & 14:00": {"main": [[{"node": "📋 Aranacak Leads", "type": "main", "index": 0}]]},
+    "📋 Aranacak Leads": {"main": [[{"node": "🔀 Teker Teker", "type": "main", "index": 0}]]},
+    "🔀 Teker Teker": {"main": [[{"node": "⏳ 30sn Bekle", "type": "main", "index": 0}]]},
+    "⏳ 30sn Bekle": {"main": [[{"node": "🧠 Prompt Hazırla", "type": "main", "index": 0}]]},
+    "🧠 Prompt Hazırla": {"main": [[{"node": "📞 Vapi Arama", "type": "main", "index": 0}]]},
+    "📞 Vapi Arama": {"main": [[{"node": "📝 Güncelle", "type": "main", "index": 0}]]}
+  }
+}

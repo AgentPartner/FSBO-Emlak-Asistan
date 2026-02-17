@@ -1,0 +1,303 @@
+{
+  "name": "🎧 FSBO Kayıt Dinleme & Kalite Kontrol",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "recordings",
+        "options": {}
+      },
+      "id": "recordings-api",
+      "name": "🔘 Kayıtlar API",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "recordings"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT \n  cl.id,\n  cl.vapi_call_id,\n  cl.arama_baslangic,\n  cl.sure_saniye,\n  cl.recording_url,\n  cl.transcript,\n  cl.randevu_alindi,\n  cl.musteri_ilgisi,\n  cl.duygu,\n  cl.ozet,\n  l.baslik,\n  l.il,\n  l.ilce,\n  l.fiyat_formatted,\n  l.ilan_sahibi\nFROM call_logs cl\nJOIN leads l ON cl.ilan_id = l.ilan_id\nWHERE cl.recording_url IS NOT NULL\n{{ $json.query.date ? \"AND DATE(cl.arama_baslangic) = '\" + $json.query.date + \"'\" : \"AND cl.arama_baslangic >= NOW() - INTERVAL '7 days'\" }}\n{{ $json.query.success ? \"AND cl.randevu_alindi = \" + ($json.query.success === 'true') : \"\" }}\nORDER BY cl.arama_baslangic DESC\nLIMIT {{ $json.query.limit || 50 }}",
+        "options": {}
+      },
+      "id": "get-recordings",
+      "name": "📋 Kayıtları Getir",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [220, 0],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-db",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, count: $json.length, recordings: $json }) }}",
+        "options": {}
+      },
+      "id": "return-recordings",
+      "name": "📤 Kayıtları Döndür",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "analyze-recording",
+        "options": {}
+      },
+      "id": "analyze-trigger",
+      "name": "🔘 Analiz Tetikleyici",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 300],
+      "webhookId": "analyze-recording"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT * FROM call_logs WHERE id = {{ $json.body.call_log_id }}",
+        "options": {}
+      },
+      "id": "get-call-log",
+      "name": "📋 Arama Kaydı Al",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [220, 300],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-db",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{$env.ANTHROPIC_API_KEY}}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 2048,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Aşağıdaki emlak satış görüşmesi transkriptini detaylı olarak analiz et ve kalite değerlendirmesi yap.\\n\\nTRANSKRİPT:\\n{{ $json.transcript }}\\n\\n## ANALİZ KRİTERLERİ\\n\\n1. **AÇILIŞ KALİTESİ** (1-10)\\n   - Net ve profesyonel mi?\\n   - Kendini tanıttı mı?\\n   - İzin aldı mı?\\n\\n2. **DİNLEME BECERİSİ** (1-10)\\n   - Müşteriyi kesti mi?\\n   - Onaylayıcı tepkiler verdi mi?\\n   - Empati gösterdi mi?\\n\\n3. **SORU SORMA** (1-10)\\n   - Keşif soruları sordu mu?\\n   - Açık uçlu sorular mı?\\n   - Müşteri ihtiyacını anladı mı?\\n\\n4. **DEĞER ÖNERİSİ** (1-10)\\n   - Kişiselleştirilmiş mi?\\n   - İkna edici mi?\\n   - Fayda odaklı mı?\\n\\n5. **İTİRAZ YÖNETİMİ** (1-10)\\n   - İtirazları kabul etti mi?\\n   - Etkili cevap verdi mi?\\n   - Agresif olmadan mı?\\n\\n6. **KAPANIŞ** (1-10)\\n   - Randevu teklif etti mi?\\n   - Alternatif sundu mu?\\n   - Takip planı var mı?\\n\\n7. **GENEL PROFESYONELLIK** (1-10)\\n   - Ses tonu uygun mu?\\n   - Robot gibi mi yoksa doğal mı?\\n   - Nezaket seviyesi?\\n\\n## ÇIKTI FORMATI (JSON)\\n\\n{\\n  \\\"acilis_puani\\\": 8,\\n  \\\"dinleme_puani\\\": 7,\\n  \\\"soru_sorma_puani\\\": 6,\\n  \\\"deger_onerisi_puani\\\": 8,\\n  \\\"itiraz_yonetimi_puani\\\": 7,\\n  \\\"kapanis_puani\\\": 5,\\n  \\\"profesyonellik_puani\\\": 8,\\n  \\\"toplam_puan\\\": 7.0,\\n  \\\"guclu_yonler\\\": [\\\"İyi açılış\\\", \\\"Empati kurma\\\"],\\n  \\\"gelisim_alanlari\\\": [\\\"Kapanış daha güçlü olmalı\\\", \\\"Daha fazla soru sorulmalı\\\"],\\n  \\\"oneriler\\\": [\\\"Alternatif randevu saatleri sun\\\", \\\"Müşteri adını daha sık kullan\\\"],\\n  \\\"ornek_iyi_anlar\\\": [\\\"'Anlıyorum, bu gerçekten zor olabilir' - güzel empati\\\"],\\n  \\\"ornek_gelisim_anlari\\\": [\\\"Müşteriyi kesti, bitmesini beklemeliydi\\\"],\\n  \\\"egitim_notu\\\": \\\"Kapanış teknikleri eğitimi önerilir\\\"\\n}\\n\\nSadece JSON formatında yanıt ver.\"\n    }\n  ]\n}"
+      },
+      "id": "claude-quality-analysis",
+      "name": "🧠 Claude Kalite Analizi",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "anthropic-api",
+          "name": "Anthropic API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst callLog = $('📋 Arama Kaydı Al').first().json;\n\nlet analysis = {};\ntry {\n  const content = response.content?.[0]?.text || '';\n  const jsonMatch = content.match(/\\{[\\s\\S]*\\}/);\n  if (jsonMatch) {\n    analysis = JSON.parse(jsonMatch[0]);\n  }\n} catch (e) {\n  analysis = { error: 'Analiz yapılamadı', raw: response };\n}\n\nreturn [{\n  json: {\n    call_log_id: callLog.id,\n    vapi_call_id: callLog.vapi_call_id,\n    ...analysis\n  }\n}];"
+      },
+      "id": "parse-quality-analysis",
+      "name": "📊 Analiz Parse",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 300]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "quality_reviews",
+        "columns": "call_log_id, acilis_puani, dinleme_puani, soru_sorma_puani, deger_onerisi_puani, itiraz_yonetimi_puani, kapanis_puani, profesyonellik_puani, toplam_puan, guclu_yonler, gelisim_alanlari, oneriler, egitim_notu",
+        "options": {}
+      },
+      "id": "save-quality-review",
+      "name": "💾 Kalite Kaydı",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [880, 300],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-db",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, analysis: $json }) }}",
+        "options": {}
+      },
+      "id": "return-analysis",
+      "name": "📤 Analizi Döndür",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1100, 300]
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "quality-stats",
+        "options": {}
+      },
+      "id": "quality-stats-api",
+      "name": "🔘 Kalite İstatistikleri",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 600],
+      "webhookId": "quality-stats"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  COUNT(*) as toplam_inceleme,\n  ROUND(AVG(toplam_puan), 2) as ort_toplam_puan,\n  ROUND(AVG(acilis_puani), 2) as ort_acilis,\n  ROUND(AVG(dinleme_puani), 2) as ort_dinleme,\n  ROUND(AVG(soru_sorma_puani), 2) as ort_soru_sorma,\n  ROUND(AVG(deger_onerisi_puani), 2) as ort_deger_onerisi,\n  ROUND(AVG(itiraz_yonetimi_puani), 2) as ort_itiraz,\n  ROUND(AVG(kapanis_puani), 2) as ort_kapanis,\n  ROUND(AVG(profesyonellik_puani), 2) as ort_profesyonellik\nFROM quality_reviews\nWHERE created_at >= NOW() - INTERVAL '30 days'",
+        "options": {}
+      },
+      "id": "get-quality-stats",
+      "name": "📊 Kalite İstatistikleri",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [220, 600],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-db",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, stats: $json }) }}",
+        "options": {}
+      },
+      "id": "return-quality-stats",
+      "name": "📤 İstatistikleri Döndür",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [440, 600]
+    }
+  ],
+  "connections": {
+    "🔘 Kayıtlar API": {
+      "main": [
+        [
+          {
+            "node": "📋 Kayıtları Getir",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📋 Kayıtları Getir": {
+      "main": [
+        [
+          {
+            "node": "📤 Kayıtları Döndür",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔘 Analiz Tetikleyici": {
+      "main": [
+        [
+          {
+            "node": "📋 Arama Kaydı Al",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📋 Arama Kaydı Al": {
+      "main": [
+        [
+          {
+            "node": "🧠 Claude Kalite Analizi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🧠 Claude Kalite Analizi": {
+      "main": [
+        [
+          {
+            "node": "📊 Analiz Parse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📊 Analiz Parse": {
+      "main": [
+        [
+          {
+            "node": "💾 Kalite Kaydı",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "💾 Kalite Kaydı": {
+      "main": [
+        [
+          {
+            "node": "📤 Analizi Döndür",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔘 Kalite İstatistikleri": {
+      "main": [
+        [
+          {
+            "node": "📊 Kalite İstatistikleri",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📊 Kalite İstatistikleri": {
+      "main": [
+        [
+          {
+            "node": "📤 İstatistikleri Döndür",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

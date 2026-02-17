@@ -1,0 +1,219 @@
+{
+  "name": "📱 FSBO WhatsApp Takip Mesajları",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 11,16 * * 1-6"
+            }
+          ]
+        }
+      },
+      "id": "schedule-whatsapp",
+      "name": "⏰ Her Gün 11:00 & 16:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT l.*, cl.ozet, cl.recording_url\nFROM leads l\nJOIN call_logs cl ON l.vapi_call_id = cl.vapi_call_id\nWHERE l.durum IN ('arama_yapildi', 'tekrar_ara')\n  AND cl.randevu_alindi = false\n  AND cl.tekrar_ara = true\n  AND l.whatsapp_gonderildi IS NULL\n  AND cl.arama_bitis > NOW() - INTERVAL '24 hours'\nORDER BY cl.musteri_ilgisi DESC\nLIMIT 30",
+        "options": {}
+      },
+      "id": "get-followup-leads",
+      "name": "📋 Takip Edilecek Lead'ler",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [220, 0],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-db",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "split-leads",
+      "name": "🔀 Teker Teker",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead = $input.first().json;\n\n// Müşteri ilgisine göre mesaj şablonu seç\nconst ilgi = lead.musteri_ilgisi || 5;\nlet mesaj = '';\n\nif (ilgi >= 7) {\n  // Yüksek ilgi - Doğrudan randevu teklifi\n  mesaj = `Merhaba ${lead.ilan_sahibi || ''},\\n\\nBen Ayşe, Prestij Emlak'tan. Daha önce görüştük ve mülkünüze olan ilgimizi paylaşmıştım.\\n\\n🏠 ${lead.baslik || lead.il + ' ' + lead.ilce}\\n💰 ${lead.fiyat_formatted || ''}\\n\\nSize özel bir teklifimiz var: Ücretsiz profesyonel fotoğraf çekimi + değerleme hizmeti.\\n\\n📅 Yarın veya bu hafta içi size uygun bir zaman var mı?\\n\\nHemen randevu almak için: 0212 XXX XX XX\\n\\nAyşe Yılmaz\\nPrestij Emlak`;\n} else if (ilgi >= 4) {\n  // Orta ilgi - Bilgi paylaşımı\n  mesaj = `Merhaba ${lead.ilan_sahibi || ''},\\n\\nBen Ayşe, Prestij Emlak'tan. Kısa bir süre önce görüştük.\\n\\n📊 Bölgenizdeki son satış verilerini inceledim:\\n- Ortalama satış süresi: 45 gün\\n- Fiyat aralığı: Uygun\\n\\n🎯 Sizin mülkünüz için özel bir pazarlama stratejimiz var.\\n\\nDetaylı bilgi için beni arayabilirsiniz: 0212 XXX XX XX\\n\\nAyşe Yılmaz\\nPrestij Emlak`;\n} else {\n  // Düşük ilgi - Yumuşak hatırlatma\n  mesaj = `Merhaba ${lead.ilan_sahibi || ''},\\n\\nBen Ayşe, Prestij Emlak'tan.\\n\\n${lead.il || ''} ${lead.ilce || ''}'deki mülkünüz için yardımcı olabileceğimizi hatırlatmak istedim.\\n\\n✅ Ücretsiz değerleme\\n✅ Profesyonel fotoğraf\\n✅ 5000+ aktif alıcı portföyü\\n\\nSorularınız için: 0212 XXX XX XX\\n\\nİyi günler dilerim,\\nAyşe Yılmaz`;\n}\n\nreturn [{\n  json: {\n    ...lead,\n    whatsapp_mesaj: mesaj,\n    telefon_formatted: '+90' + (lead.telefon || '').replace(/[^0-9]/g, '')\n  }\n}];"
+      },
+      "id": "prepare-message",
+      "name": "📝 Mesaj Hazırla",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v18.0/{{$env.WHATSAPP_PHONE_ID}}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $json.telefon_formatted }}\",\n  \"type\": \"text\",\n  \"text\": {\n    \"body\": {{ JSON.stringify($json.whatsapp_mesaj) }}\n  }\n}"
+      },
+      "id": "send-whatsapp",
+      "name": "📱 WhatsApp Gönder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [880, 0],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "whatsapp-api",
+          "name": "WhatsApp Business API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": "public",
+        "table": "leads",
+        "updateKey": "id",
+        "columns": "whatsapp_gonderildi, whatsapp_tarihi",
+        "additionalFields": {
+          "whatsapp_gonderildi": true,
+          "whatsapp_tarihi": "={{ $now.toISO() }}"
+        }
+      },
+      "id": "update-lead-whatsapp",
+      "name": "📝 WhatsApp Durumu Güncelle",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1100, 0],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-db",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 5,
+        "unit": "seconds"
+      },
+      "id": "wait-between",
+      "name": "⏳ 5sn Bekle",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1320, 0]
+    },
+    {
+      "parameters": {},
+      "id": "loop-back",
+      "name": "🔄 Sonraki",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1540, 0]
+    }
+  ],
+  "connections": {
+    "⏰ Her Gün 11:00 & 16:00": {
+      "main": [
+        [
+          {
+            "node": "📋 Takip Edilecek Lead'ler",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📋 Takip Edilecek Lead'ler": {
+      "main": [
+        [
+          {
+            "node": "🔀 Teker Teker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔀 Teker Teker": {
+      "main": [
+        [
+          {
+            "node": "📝 Mesaj Hazırla",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📝 Mesaj Hazırla": {
+      "main": [
+        [
+          {
+            "node": "📱 WhatsApp Gönder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📱 WhatsApp Gönder": {
+      "main": [
+        [
+          {
+            "node": "📝 WhatsApp Durumu Güncelle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📝 WhatsApp Durumu Güncelle": {
+      "main": [
+        [
+          {
+            "node": "⏳ 5sn Bekle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⏳ 5sn Bekle": {
+      "main": [
+        [
+          {
+            "node": "🔄 Sonraki",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔄 Sonraki": {
+      "main": [
+        [
+          {
+            "node": "🔀 Teker Teker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

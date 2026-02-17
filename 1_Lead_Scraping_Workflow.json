@@ -1,0 +1,55 @@
+{
+  "name": "🏠 FSBO Lead Scraping",
+  "nodes": [
+    {
+      "parameters": {"rule": {"interval": [{"field": "hours", "hoursInterval": 6}]}},
+      "id": "schedule", "name": "⏰ Her 6 Saatte", "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2, "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "url": "https://api.brightdata.com/datasets/v3/trigger",
+        "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth",
+        "sendBody": true, "specifyBody": "json",
+        "jsonBody": "{\"dataset_id\": \"sahibinden\", \"format\": \"json\"}"
+      },
+      "id": "scrape", "name": "🔍 Bright Data", "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2, "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst leads = [];\nfor (const item of items) {\n  if (item.json.listings) {\n    for (const l of item.json.listings) {\n      leads.push({\n        ilan_id: l.id, baslik: l.title, fiyat: l.price,\n        il: l.location?.city, ilce: l.location?.district,\n        telefon: l.phone, mulk_tipi: l.category,\n        ilan_url: l.url, kayit_tarihi: new Date().toISOString(),\n        durum: 'yeni', lead_score: 50\n      });\n    }\n  }\n}\nreturn leads.map(l => ({json: l}));"
+      },
+      "id": "parse", "name": "📋 Parse", "type": "n8n-nodes-base.code",
+      "typeVersion": 2, "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT ilan_id FROM leads WHERE ilan_id = '{{ $json.ilan_id }}'"
+      },
+      "id": "check", "name": "🔄 Duplikasyon", "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5, "position": [660, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {"conditions": [{"leftValue": "={{ $json.length }}", "rightValue": 0,
+        "operator": {"type": "number", "operation": "equals"}}]}
+      },
+      "id": "if-new", "name": "❓ Yeni mi?", "type": "n8n-nodes-base.if",
+      "typeVersion": 2, "position": [880, 0]
+    },
+    {
+      "parameters": {"operation": "insert", "table": "leads"},
+      "id": "insert", "name": "💾 Kaydet", "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5, "position": [1100, -50]
+    }
+  ],
+  "connections": {
+    "⏰ Her 6 Saatte": {"main": [[{"node": "🔍 Bright Data", "type": "main", "index": 0}]]},
+    "🔍 Bright Data": {"main": [[{"node": "📋 Parse", "type": "main", "index": 0}]]},
+    "📋 Parse": {"main": [[{"node": "🔄 Duplikasyon", "type": "main", "index": 0}]]},
+    "🔄 Duplikasyon": {"main": [[{"node": "❓ Yeni mi?", "type": "main", "index": 0}]]},
+    "❓ Yeni mi?": {"main": [[{"node": "💾 Kaydet", "type": "main", "index": 0}], []]}
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "name": "🔔 FSBO Vapi Webhook Handler",
+  "nodes": [
+    {
+      "parameters": {"httpMethod": "POST", "path": "vapi-callback"},
+      "id": "webhook", "name": "🔔 Vapi Webhook", "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2, "position": [0, 0], "webhookId": "vapi-callback"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst eventType = data.message?.type || data.type;\nlet result = {event_type: eventType, call_id: data.message?.call?.id};\nif (eventType === 'end-of-call-report') {\n  const call = data.message?.call || {};\n  result = {...result, duration: call.duration, transcript: data.message?.transcript,\n    recording_url: call.recordingUrl, randevu_alindi: false, tekrar_ara: false};\n  const t = (result.transcript || '').toLowerCase();\n  if (t.includes('randevu') && (t.includes('tamam') || t.includes('uygun'))) result.randevu_alindi = true;\n  if (t.includes('sonra') || t.includes('meşgul')) result.tekrar_ara = true;\n}\nreturn [{json: result}];"
+      },
+      "id": "parse", "name": "📋 Parse", "type": "n8n-nodes-base.code",
+      "typeVersion": 2, "position": [220, 0]
+    },
+    {
+      "parameters": {"conditions": {"string": [{"value1": "={{ $json.event_type }}", "value2": "end-of-call-report"}]}},
+      "id": "if-end", "name": "❓ Arama Bitti?", "type": "n8n-nodes-base.if",
+      "typeVersion": 1, "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST", "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true, "headerParameters": {"parameters": [{"name": "x-api-key", "value": "={{$env.ANTHROPIC_API_KEY}}"},{"name": "anthropic-version", "value": "2023-06-01"}]},
+        "sendBody": true, "specifyBody": "json",
+        "jsonBody": "={\"model\":\"claude-sonnet-4-20250514\",\"max_tokens\":1024,\"messages\":[{\"role\":\"user\",\"content\":\"Analiz et: {{$json.transcript}}\\n\\nJSON: {randevu_alindi, randevu_tarihi, tekrar_ara, musteri_ilgisi(1-10), ozet}\"}]}"
+      },
+      "id": "claude", "name": "🧠 Claude Analiz", "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2, "position": [660, -50]
+    },
+    {
+      "parameters": {"operation": "insert", "table": "call_logs"},
+      "id": "log", "name": "💾 Log Kaydet", "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5, "position": [880, -50]
+    },
+    {
+      "parameters": {"conditions": {"boolean": [{"value1": "={{ $json.randevu_alindi }}", "value2": true}]}},
+      "id": "if-apt", "name": "❓ Randevu?", "type": "n8n-nodes-base.if",
+      "typeVersion": 1, "position": [1100, -50]
+    },
+    {
+      "parameters": {"operation": "update", "table": "leads", "updateKey": "vapi_call_id"},
+      "id": "update-apt", "name": "✅ Randevu Kaydet", "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5, "position": [1320, -100]
+    },
+    {
+      "parameters": {"channel": "#emlak-randevular", "text": "=🎉 YENİ RANDEVU!\\n{{ $json.ozet }}"},
+      "id": "slack", "name": "📢 Slack", "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2, "position": [1540, -100]
+    }
+  ],
+  "connections": {
+    "🔔 Vapi Webhook": {"main": [[{"node": "📋 Parse", "type": "main", "index": 0}]]},
+    "📋 Parse": {"main": [[{"node": "❓ Arama Bitti?", "type": "main", "index": 0}]]},
+    "❓ Arama Bitti?": {"main": [[{"node": "🧠 Claude Analiz", "type": "main", "index": 0}], []]},
+    "🧠 Claude Analiz": {"main": [[{"node": "💾 Log Kaydet", "type": "main", "index": 0}]]},
+    "💾 Log Kaydet": {"main": [[{"node": "❓ Randevu?", "type": "main", "index": 0}]]},
+    "❓ Randevu?": {"main": [[{"node": "✅ Randevu Kaydet", "type": "main", "index": 0}], []]},
+    "✅ Randevu Kaydet": {"main": [[{"node": "📢 Slack", "type": "main", "index": 0}]]}
+  }
+}

@@ -1,0 +1,285 @@
+{
+  "name": "🔄 FSBO Manuel Arama Tetikleme",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "trigger-call",
+        "options": {
+          "responseMode": "responseNode"
+        }
+      },
+      "id": "webhook-manual",
+      "name": "🔔 Manuel Tetikleme",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "trigger-call"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "has-lead-id",
+              "leftValue": "={{ $json.body.lead_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-params",
+      "name": "❓ Lead ID Var mı?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT * FROM leads WHERE id = {{ $json.body.lead_id }} OR ilan_id = '{{ $json.body.lead_id }}'",
+        "options": {}
+      },
+      "id": "get-lead",
+      "name": "📋 Lead Bilgisi Al",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [440, -100],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-db",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "lead-exists",
+              "leftValue": "={{ $json.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-lead-exists",
+      "name": "❓ Lead Bulundu mu?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [660, -100]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Vapi.ai için dinamik prompt oluştur\nconst lead = $input.first().json;\n\nlet mulkAciklama = '';\nswitch(lead.mulk_tipi) {\n  case 'konut':\n    mulkAciklama = `${lead.oda_sayisi || ''} ${lead.metrekare ? lead.metrekare + ' metrekare' : ''} daireniz`;\n    break;\n  case 'arsa':\n    mulkAciklama = `${lead.metrekare ? lead.metrekare + ' metrekare' : ''} arsanız`;\n    break;\n  case 'isyeri':\n    mulkAciklama = `ticari mülkünüz`;\n    break;\n  default:\n    mulkAciklama = 'mülkünüz';\n}\n\nconst ilanTarihi = new Date(lead.ilan_tarihi);\nconst gunFarki = Math.floor((Date.now() - ilanTarihi) / (1000 * 60 * 60 * 24));\n\nlet aciliyetMesaji = '';\nif (gunFarki > 30) {\n  aciliyetMesaji = 'İlanınız bir süredir yayında, doğru alıcıyı bulmak zaman alabiliyor değil mi?';\n} else if (gunFarki > 14) {\n  aciliyetMesaji = 'İlanınıza ilgi nasıl, beklentilerinizi karşılıyor mu?';\n} else {\n  aciliyetMesaji = 'Yeni ilanınızı gördüm, satış sürecinizi hızlandırmak ister misiniz?';\n}\n\nconst systemPrompt = `Sen deneyimli bir emlak danışmanısın. Müşteriyle nazik, profesyonel ve ikna edici konuş.\n\nMüşteri Bilgileri:\n- İsim: ${lead.ilan_sahibi || 'Değerli Müşterimiz'}\n- Mülk: ${mulkAciklama}\n- Konum: ${lead.il || ''} ${lead.ilce || ''}\n- Fiyat: ${lead.fiyat_formatted || 'Belirtilmemiş'}\n\nAçılış: \"${aciliyetMesaji}\"\n\nHedef: Ücretsiz değerleme için randevu al.`;\n\nreturn [{\n  json: {\n    ...lead,\n    system_prompt: systemPrompt,\n    first_message: `Merhaba, ben Ayşe, Prestij Emlak'tan arıyorum. ${lead.il || ''} ${lead.ilce || ''}'deki ilanınızı gördüm. Kısa bir dakikanız var mı?`\n  }\n}];"
+      },
+      "id": "prepare-call",
+      "name": "🧠 Arama Hazırla",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, -100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.vapi.ai/call/phone",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"phoneNumberId\": \"{{$env.VAPI_PHONE_NUMBER_ID}}\",\n  \"customer\": {\n    \"number\": \"+90{{ $json.telefon.replace(/[^0-9]/g, '') }}\",\n    \"name\": \"{{ $json.ilan_sahibi || 'Müşteri' }}\"\n  },\n  \"assistant\": {\n    \"model\": {\n      \"provider\": \"anthropic\",\n      \"model\": \"claude-sonnet-4-20250514\",\n      \"temperature\": 0.7,\n      \"systemPrompt\": {{ JSON.stringify($json.system_prompt) }}\n    },\n    \"voice\": {\n      \"provider\": \"elevenlabs\",\n      \"voiceId\": \"pNInz6obpgDQGcFmaJgB\",\n      \"model\": \"eleven_turbo_v2_5\"\n    },\n    \"firstMessage\": {{ JSON.stringify($json.first_message) }},\n    \"recordingEnabled\": true,\n    \"maxDurationSeconds\": 600\n  },\n  \"serverUrl\": \"{{$env.WEBHOOK_BASE_URL}}/webhook/vapi-callback\"\n}"
+      },
+      "id": "make-call",
+      "name": "📞 Aramayı Başlat",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, -100],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "vapi-api",
+          "name": "Vapi API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": "public",
+        "table": "leads",
+        "updateKey": "id",
+        "columns": "son_arama, arama_sayisi, vapi_call_id, durum",
+        "options": {}
+      },
+      "id": "update-lead",
+      "name": "📝 Lead Güncelle",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1320, -100],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-db",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"message\": \"Arama başlatıldı\",\n  \"call_id\": \"{{ $json.id }}\",\n  \"lead\": {\n    \"id\": {{ $('📋 Lead Bilgisi Al').item.json.id }},\n    \"baslik\": \"{{ $('📋 Lead Bilgisi Al').item.json.baslik }}\",\n    \"telefon\": \"{{ $('📋 Lead Bilgisi Al').item.json.telefon }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "response-success",
+      "name": "✅ Başarılı Yanıt",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1540, -100]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"success\": false,\n  \"error\": \"Lead bulunamadı\"\n}",
+        "options": {
+          "responseCode": 404
+        }
+      },
+      "id": "response-not-found",
+      "name": "❌ Lead Bulunamadı",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [880, 50]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"success\": false,\n  \"error\": \"lead_id parametresi gerekli\"\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "response-bad-request",
+      "name": "❌ Parametre Eksik",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [440, 100]
+    }
+  ],
+  "connections": {
+    "🔔 Manuel Tetikleme": {
+      "main": [
+        [
+          {
+            "node": "❓ Lead ID Var mı?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "❓ Lead ID Var mı?": {
+      "main": [
+        [
+          {
+            "node": "📋 Lead Bilgisi Al",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "❌ Parametre Eksik",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📋 Lead Bilgisi Al": {
+      "main": [
+        [
+          {
+            "node": "❓ Lead Bulundu mu?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "❓ Lead Bulundu mu?": {
+      "main": [
+        [
+          {
+            "node": "🧠 Arama Hazırla",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "❌ Lead Bulunamadı",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🧠 Arama Hazırla": {
+      "main": [
+        [
+          {
+            "node": "📞 Aramayı Başlat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📞 Aramayı Başlat": {
+      "main": [
+        [
+          {
+            "node": "📝 Lead Güncelle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📝 Lead Güncelle": {
+      "main": [
+        [
+          {
+            "node": "✅ Başarılı Yanıt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

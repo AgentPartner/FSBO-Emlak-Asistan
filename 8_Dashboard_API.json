@@ -1,0 +1,450 @@
+{
+  "name": "📊 FSBO Dashboard API",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "dashboard/overview",
+        "options": {}
+      },
+      "id": "webhook-overview",
+      "name": "🔔 Dashboard Overview",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "dashboard-overview"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH today_stats AS (\n  SELECT \n    COUNT(*) as today_calls,\n    SUM(CASE WHEN randevu_alindi THEN 1 ELSE 0 END) as today_appointments,\n    SUM(maliyet) as today_cost\n  FROM call_logs WHERE DATE(arama_baslangic) = CURRENT_DATE\n),\nweek_stats AS (\n  SELECT \n    COUNT(*) as week_calls,\n    SUM(CASE WHEN randevu_alindi THEN 1 ELSE 0 END) as week_appointments,\n    SUM(maliyet) as week_cost\n  FROM call_logs WHERE arama_baslangic > NOW() - INTERVAL '7 days'\n),\nlead_stats AS (\n  SELECT \n    COUNT(*) as total_leads,\n    SUM(CASE WHEN durum = 'yeni' THEN 1 ELSE 0 END) as new_leads,\n    SUM(CASE WHEN durum = 'randevu_alindi' THEN 1 ELSE 0 END) as converted_leads,\n    SUM(CASE WHEN durum = 'tekrar_ara' THEN 1 ELSE 0 END) as callback_leads\n  FROM leads\n),\npending_appointments AS (\n  SELECT COUNT(*) as pending\n  FROM appointments WHERE durum = 'bekliyor' AND randevu_tarihi > NOW()\n)\nSELECT \n  t.today_calls,\n  t.today_appointments,\n  t.today_cost,\n  w.week_calls,\n  w.week_appointments,\n  w.week_cost,\n  l.total_leads,\n  l.new_leads,\n  l.converted_leads,\n  l.callback_leads,\n  p.pending as pending_appointments,\n  CASE WHEN w.week_calls > 0 \n    THEN ROUND(100.0 * w.week_appointments / w.week_calls, 2) \n    ELSE 0 \n  END as conversion_rate\nFROM today_stats t, week_stats w, lead_stats l, pending_appointments p",
+        "options": {}
+      },
+      "id": "get-overview",
+      "name": "📊 Overview Stats",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [220, 0],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-db",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, data: $json }) }}",
+        "options": {}
+      },
+      "id": "response-overview",
+      "name": "📤 Overview Yanıt",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "dashboard/leads",
+        "options": {}
+      },
+      "id": "webhook-leads",
+      "name": "🔔 Lead Listesi",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 200],
+      "webhookId": "dashboard-leads"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT \n  l.id,\n  l.ilan_id,\n  l.baslik,\n  l.il,\n  l.ilce,\n  l.fiyat_formatted,\n  l.mulk_tipi,\n  l.telefon,\n  l.ilan_sahibi,\n  l.lead_score,\n  l.oncelik,\n  l.durum,\n  l.arama_sayisi,\n  l.son_arama,\n  l.randevu_tarihi,\n  l.kayit_tarihi,\n  l.ilan_url\nFROM leads l\nWHERE 1=1\n{{ $json.query.status ? \"AND l.durum = '\" + $json.query.status + \"'\" : '' }}\n{{ $json.query.city ? \"AND l.il = '\" + $json.query.city + \"'\" : '' }}\n{{ $json.query.priority ? \"AND l.oncelik = '\" + $json.query.priority + \"'\" : '' }}\n{{ $json.query.search ? \"AND (l.baslik ILIKE '%\" + $json.query.search + \"%' OR l.ilan_sahibi ILIKE '%\" + $json.query.search + \"%')\" : '' }}\nORDER BY \n  {{ $json.query.sort === 'score' ? 'l.lead_score DESC' : '' }}\n  {{ $json.query.sort === 'date' ? 'l.kayit_tarihi DESC' : '' }}\n  {{ !$json.query.sort ? 'l.kayit_tarihi DESC' : '' }}\nLIMIT {{ $json.query.limit || 50 }}\nOFFSET {{ $json.query.offset || 0 }}",
+        "options": {}
+      },
+      "id": "get-leads-list",
+      "name": "📋 Lead Listesi Al",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [220, 200],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-db",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, count: $input.all().length, leads: $input.all().map(i => i.json) }) }}",
+        "options": {}
+      },
+      "id": "response-leads",
+      "name": "📤 Lead Yanıt",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [440, 200]
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "dashboard/appointments",
+        "options": {}
+      },
+      "id": "webhook-appointments",
+      "name": "🔔 Randevu Listesi",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 400],
+      "webhookId": "dashboard-appointments"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT \n  a.id,\n  a.randevu_tarihi,\n  a.randevu_turu,\n  a.durum,\n  a.atanan_personel,\n  a.konum,\n  a.sonuc,\n  l.baslik,\n  l.il,\n  l.ilce,\n  l.fiyat_formatted,\n  l.telefon,\n  l.ilan_sahibi,\n  cl.recording_url,\n  cl.ozet\nFROM appointments a\nJOIN leads l ON a.lead_id = l.id\nLEFT JOIN call_logs cl ON a.call_log_id = cl.id\nWHERE 1=1\n{{ $json.query.status ? \"AND a.durum = '\" + $json.query.status + \"'\" : '' }}\n{{ $json.query.date ? \"AND DATE(a.randevu_tarihi) = '\" + $json.query.date + \"'\" : '' }}\n{{ $json.query.upcoming === 'true' ? 'AND a.randevu_tarihi > NOW()' : '' }}\nORDER BY a.randevu_tarihi ASC\nLIMIT {{ $json.query.limit || 50 }}",
+        "options": {}
+      },
+      "id": "get-appointments-list",
+      "name": "📅 Randevu Listesi Al",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [220, 400],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-db",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, count: $input.all().length, appointments: $input.all().map(i => i.json) }) }}",
+        "options": {}
+      },
+      "id": "response-appointments",
+      "name": "📤 Randevu Yanıt",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [440, 400]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dashboard/appointments/update",
+        "options": {}
+      },
+      "id": "webhook-update-appointment",
+      "name": "🔔 Randevu Güncelle",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 600],
+      "webhookId": "update-appointment"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": "public",
+        "table": "appointments",
+        "updateKey": "id",
+        "columns": "durum, sonuc, sonuc_notu, atanan_personel",
+        "options": {}
+      },
+      "id": "update-appointment",
+      "name": "📝 Randevu Güncelle",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [220, 600],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-db",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"success\": true,\n  \"message\": \"Randevu güncellendi\"\n}",
+        "options": {}
+      },
+      "id": "response-update",
+      "name": "✅ Güncelleme Başarılı",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [440, 600]
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "dashboard/analytics",
+        "options": {}
+      },
+      "id": "webhook-analytics",
+      "name": "🔔 Analytics",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 800],
+      "webhookId": "dashboard-analytics"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=-- Günlük trend (son 30 gün)\nSELECT \n  DATE(arama_baslangic) as tarih,\n  COUNT(*) as aramalar,\n  SUM(CASE WHEN randevu_alindi THEN 1 ELSE 0 END) as randevular,\n  ROUND(100.0 * SUM(CASE WHEN randevu_alindi THEN 1 ELSE 0 END) / COUNT(*), 2) as oran,\n  ROUND(AVG(musteri_ilgisi), 2) as ort_ilgi,\n  SUM(maliyet) as maliyet\nFROM call_logs\nWHERE arama_baslangic > NOW() - INTERVAL '{{ $json.query.days || 30 }} days'\nGROUP BY DATE(arama_baslangic)\nORDER BY tarih DESC",
+        "options": {}
+      },
+      "id": "get-daily-trend",
+      "name": "📈 Günlük Trend",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [220, 800],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-db",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- Şehir bazlı performans\nSELECT \n  l.il,\n  COUNT(*) as aramalar,\n  SUM(CASE WHEN cl.randevu_alindi THEN 1 ELSE 0 END) as randevular,\n  ROUND(100.0 * SUM(CASE WHEN cl.randevu_alindi THEN 1 ELSE 0 END) / COUNT(*), 2) as oran\nFROM call_logs cl\nJOIN leads l ON cl.ilan_id = l.ilan_id\nWHERE cl.arama_baslangic > NOW() - INTERVAL '30 days'\nGROUP BY l.il\nHAVING COUNT(*) >= 5\nORDER BY oran DESC\nLIMIT 20",
+        "options": {}
+      },
+      "id": "get-city-stats",
+      "name": "📍 Şehir Bazlı",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [220, 950],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-db",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- Saat bazlı performans\nSELECT \n  EXTRACT(HOUR FROM arama_baslangic) as saat,\n  COUNT(*) as aramalar,\n  SUM(CASE WHEN randevu_alindi THEN 1 ELSE 0 END) as randevular,\n  ROUND(100.0 * SUM(CASE WHEN randevu_alindi THEN 1 ELSE 0 END) / COUNT(*), 2) as oran\nFROM call_logs\nWHERE arama_baslangic > NOW() - INTERVAL '30 days'\nGROUP BY EXTRACT(HOUR FROM arama_baslangic)\nORDER BY saat",
+        "options": {}
+      },
+      "id": "get-hourly-stats",
+      "name": "🕐 Saat Bazlı",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [220, 1100],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-db",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "id": "merge-analytics",
+      "name": "🔀 Birleştir",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [500, 900]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n// Veriyi kategorilere ayır\nconst dailyTrend = items.filter(i => i.json.tarih).map(i => i.json);\nconst cityStats = items.filter(i => i.json.il).map(i => i.json);\nconst hourlyStats = items.filter(i => i.json.saat !== undefined).map(i => i.json);\n\nreturn [{\n  json: {\n    daily_trend: dailyTrend,\n    city_performance: cityStats,\n    hourly_performance: hourlyStats\n  }\n}];"
+      },
+      "id": "format-analytics",
+      "name": "📊 Format",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 900]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, analytics: $json }) }}",
+        "options": {}
+      },
+      "id": "response-analytics",
+      "name": "📤 Analytics Yanıt",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [940, 900]
+    }
+  ],
+  "connections": {
+    "🔔 Dashboard Overview": {
+      "main": [
+        [
+          {
+            "node": "📊 Overview Stats",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📊 Overview Stats": {
+      "main": [
+        [
+          {
+            "node": "📤 Overview Yanıt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔔 Lead Listesi": {
+      "main": [
+        [
+          {
+            "node": "📋 Lead Listesi Al",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📋 Lead Listesi Al": {
+      "main": [
+        [
+          {
+            "node": "📤 Lead Yanıt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔔 Randevu Listesi": {
+      "main": [
+        [
+          {
+            "node": "📅 Randevu Listesi Al",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📅 Randevu Listesi Al": {
+      "main": [
+        [
+          {
+            "node": "📤 Randevu Yanıt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔔 Randevu Güncelle": {
+      "main": [
+        [
+          {
+            "node": "📝 Randevu Güncelle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📝 Randevu Güncelle": {
+      "main": [
+        [
+          {
+            "node": "✅ Güncelleme Başarılı",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔔 Analytics": {
+      "main": [
+        [
+          {
+            "node": "📈 Günlük Trend",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "📍 Şehir Bazlı",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "🕐 Saat Bazlı",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📈 Günlük Trend": {
+      "main": [
+        [
+          {
+            "node": "🔀 Birleştir",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📍 Şehir Bazlı": {
+      "main": [
+        [
+          {
+            "node": "🔀 Birleştir",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "🕐 Saat Bazlı": {
+      "main": [
+        [
+          {
+            "node": "🔀 Birleştir",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "🔀 Birleştir": {
+      "main": [
+        [
+          {
+            "node": "📊 Format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📊 Format": {
+      "main": [
+        [
+          {
+            "node": "📤 Analytics Yanıt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

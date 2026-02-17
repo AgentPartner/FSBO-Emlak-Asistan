@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Royal Emlak - Sahibinden İlan Çekici",
+  "version": "1.0.0",
+  "description": "Sahibinden.com ilanlarını otomatik çekip Royal Emlak Dashboard'a gönderir",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": ["https://www.sahibinden.com/*", "https://n8n.agentpartner.pro/*"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.sahibinden.com/*"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}

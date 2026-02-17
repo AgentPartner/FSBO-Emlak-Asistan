@@ -1,0 +1,44 @@
+{
+  "name": "📊 FSBO Günlük Rapor",
+  "nodes": [
+    {
+      "parameters": {"rule": {"interval": [{"field": "cronExpression", "expression": "0 18 * * 1-6"}]}},
+      "id": "schedule", "name": "⏰ Her Gün 18:00", "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2, "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT COUNT(*) as toplam_arama, SUM(CASE WHEN randevu_alindi THEN 1 ELSE 0 END) as randevu, SUM(maliyet) as maliyet, AVG(sure_saniye) as ort_sure FROM call_logs WHERE DATE(arama_baslangic) = CURRENT_DATE"
+      },
+      "id": "stats", "name": "📈 İstatistikler", "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5, "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $input.first().json;\nconst oran = s.toplam_arama > 0 ? ((s.randevu / s.toplam_arama) * 100).toFixed(2) : 0;\nconst rapor = `📊 FSBO GÜNLÜK RAPOR\\n📅 ${new Date().toLocaleDateString('tr-TR')}\\n\\n📞 Toplam Arama: ${s.toplam_arama}\\n✅ Randevu: ${s.randevu}\\n🎯 Başarı: %${oran}\\n⏱️ Ort. Süre: ${Math.round(s.ort_sure || 0)}sn\\n💰 Maliyet: $${(s.maliyet || 0).toFixed(2)}`;\nreturn [{json: {report: rapor, stats: s}}];"
+      },
+      "id": "format", "name": "📝 Rapor Oluştur", "type": "n8n-nodes-base.code",
+      "typeVersion": 2, "position": [440, 0]
+    },
+    {
+      "parameters": {"channel": "#emlak-raporlar", "text": "={{ $json.report }}"},
+      "id": "slack", "name": "📢 Slack", "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2, "position": [660, 0]
+    },
+    {
+      "parameters": {
+        "fromEmail": "rapor@firma.com", "toEmail": "yonetim@firma.com",
+        "subject": "=📊 FSBO Rapor - {{ $now.format('dd.MM.yyyy') }}",
+        "message": "={{ $json.report }}"
+      },
+      "id": "email", "name": "📧 Email", "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1, "position": [660, 150]
+    }
+  ],
+  "connections": {
+    "⏰ Her Gün 18:00": {"main": [[{"node": "📈 İstatistikler", "type": "main", "index": 0}]]},
+    "📈 İstatistikler": {"main": [[{"node": "📝 Rapor Oluştur", "type": "main", "index": 0}]]},
+    "📝 Rapor Oluştur": {"main": [[{"node": "📢 Slack", "type": "main", "index": 0}], [{"node": "📧 Email", "type": "main", "index": 0}]]}
+  }
+}

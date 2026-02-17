@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FSBO Emlak Asistan - Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #2563eb; --primary-hover: #1d4ed8; --green: #16a34a; --red: #dc2626;
+            --orange: #ea580c; --purple: #9333ea; --gray-50: #f9fafb; --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb; --gray-300: #d1d5db; --gray-400: #9ca3af; --gray-500: #6b7280;
+            --gray-600: #4b5563; --gray-700: #374151; --gray-800: #1f2937; --gray-900: #111827;
+            --border: #e5e7eb; --shadow: 0 1px 3px rgba(0,0,0,.1); --shadow-lg: 0 4px 12px rgba(0,0,0,.12);
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--gray-100); color: var(--gray-900); }
+        
+        /* HEADER */
+        .header { background: #fff; border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+        .header-left { display: flex; align-items: center; gap: 12px; }
+        .logo { width: 36px; height: 36px; background: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 18px; }
+        .header-title { font-size: 18px; font-weight: 700; }
+        .header-sub { font-size: 12px; color: var(--gray-500); }
+        .header-right { display: flex; align-items: center; gap: 12px; }
+        .last-update { font-size: 12px; color: var(--gray-400); }
+        
+        /* TABS */
+        .tabs { display: flex; gap: 0; background: #fff; border-bottom: 1px solid var(--border); padding: 0 24px; }
+        .tab { padding: 12px 20px; font-size: 14px; font-weight: 500; color: var(--gray-500); cursor: pointer; border-bottom: 2px solid transparent; transition: all .2s; }
+        .tab:hover { color: var(--gray-700); }
+        .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+        
+        /* BUTTONS */
+        .btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: #fff; color: var(--gray-700); transition: all .15s; display: inline-flex; align-items: center; gap: 6px; }
+        .btn:hover { background: var(--gray-50); }
+        .btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-danger { background: var(--red); color: #fff; border-color: var(--red); }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        
+        /* CARDS */
+        .content { padding: 20px 24px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 20px; }
+        .stat-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 16px; box-shadow: var(--shadow); }
+        .stat-label { font-size: 12px; color: var(--gray-500); margin-bottom: 4px; }
+        .stat-value { font-size: 28px; font-weight: 700; }
+        .stat-value.green { color: var(--green); }
+        .stat-value.red { color: var(--red); }
+        .stat-value.orange { color: var(--orange); }
+        .stat-value.purple { color: var(--purple); }
+        
+        /* TABLE PANEL */
+        .panel { background: #fff; border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
+        .panel-header { padding: 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+        .panel-title { font-size: 16px; font-weight: 600; }
+        .filters { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .filter-input { padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; outline: none; }
+        .filter-input:focus { border-color: var(--primary); }
+        select.filter-input { cursor: pointer; }
+        
+        /* TABLE */
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: var(--gray-50); }
+        th { padding: 10px 14px; text-align: left; font-size: 12px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: .5px; }
+        td { padding: 10px 14px; font-size: 13px; border-top: 1px solid var(--gray-100); }
+        tr.clickable { cursor: pointer; }
+        tr.clickable:hover { background: var(--gray-50); }
+        
+        /* BADGES */
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .badge-blue { background: #dbeafe; color: #1e40af; }
+        .badge-green { background: #dcfce7; color: #166534; }
+        .badge-yellow { background: #fef3c7; color: #92400e; }
+        .badge-red { background: #fee2e2; color: #991b1b; }
+        .badge-gray { background: var(--gray-100); color: var(--gray-600); }
+        .badge-purple { background: #f3e8ff; color: #6b21a8; }
+        .badge-orange { background: #ffedd5; color: #9a3412; }
+
+        /* DETAIL PANEL (slide-in) */
+        .detail-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.3); z-index: 200; display: none; }
+        .detail-overlay.open { display: block; }
+        .detail-panel { position: fixed; right: 0; top: 0; bottom: 0; width: 480px; max-width: 100vw; background: #fff; z-index: 201; transform: translateX(100%); transition: transform .25s ease; overflow-y: auto; box-shadow: -4px 0 20px rgba(0,0,0,.1); }
+        .detail-panel.open { transform: translateX(0); }
+        .detail-header { padding: 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: #fff; z-index: 1; }
+        .detail-body { padding: 16px; }
+        .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--gray-100); }
+        .detail-label { font-size: 13px; color: var(--gray-500); }
+        .detail-value { font-size: 13px; font-weight: 500; text-align: right; max-width: 60%; }
+        .detail-section { margin-top: 16px; }
+        .detail-section-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--gray-700); }
+
+        /* AUDIO PLAYER */
+        .audio-player { background: var(--gray-50); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-top: 12px; }
+        .audio-controls { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .play-btn { width: 36px; height: 36px; border-radius: 50%; background: var(--primary); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; transition: background .15s; }
+        .play-btn:hover { background: var(--primary-hover); }
+        .time-display { font-size: 12px; color: var(--gray-500); white-space: nowrap; min-width: 90px; text-align: center; }
+        
+        /* SEEKBAR / TIMELINE */
+        .seekbar-container { position: relative; width: 100%; height: 24px; display: flex; align-items: center; cursor: pointer; }
+        .seekbar-track { width: 100%; height: 6px; background: var(--gray-200); border-radius: 3px; position: relative; overflow: hidden; }
+        .seekbar-fill { height: 100%; background: var(--primary); border-radius: 3px; width: 0%; transition: width .1s linear; pointer-events: none; }
+        .seekbar-thumb { position: absolute; width: 14px; height: 14px; background: var(--primary); border: 2px solid #fff; border-radius: 50%; top: 50%; transform: translate(-50%, -50%); left: 0%; box-shadow: 0 1px 4px rgba(0,0,0,.2); pointer-events: none; opacity: 0; transition: opacity .15s; }
+        .seekbar-container:hover .seekbar-thumb { opacity: 1; }
+        .seekbar-tooltip { position: absolute; top: -28px; background: var(--gray-800); color: #fff; font-size: 11px; padding: 2px 6px; border-radius: 4px; transform: translateX(-50%); pointer-events: none; display: none; white-space: nowrap; }
+        .seekbar-container:hover .seekbar-tooltip { display: block; }
+        .speed-select { font-size: 12px; padding: 2px 6px; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; background: #fff; }
+
+        /* TRANSCRIPT */
+        .transcript-box { background: var(--gray-50); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-top: 12px; max-height: 300px; overflow-y: auto; font-size: 13px; line-height: 1.6; white-space: pre-wrap; color: var(--gray-700); }
+
+        /* CALL EXPAND ROW */
+        .call-expand { display: none; }
+        .call-expand.open { display: table-row; }
+        .call-expand td { padding: 0; }
+        .call-expand-inner { padding: 16px; background: var(--gray-50); border-top: 1px solid var(--gray-200); }
+
+        /* ADD FORM MODAL */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 300; display: none; justify-content: center; align-items: flex-start; padding: 40px 20px; overflow-y: auto; }
+        .modal-overlay.open { display: flex; }
+        .modal { background: #fff; border-radius: 12px; width: 600px; max-width: 100%; box-shadow: var(--shadow-lg); }
+        .modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .modal-body { padding: 20px; max-height: 70vh; overflow-y: auto; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .form-group { display: flex; flex-direction: column; gap: 4px; }
+        .form-group.full { grid-column: 1 / -1; }
+        .form-label { font-size: 12px; font-weight: 600; color: var(--gray-600); }
+        .form-input { padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; }
+        .form-input:focus { outline: none; border-color: var(--primary); }
+        textarea.form-input { resize: vertical; min-height: 60px; }
+        .modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .detail-panel { width: 100vw; }
+            .header { padding: 10px 16px; }
+            .content { padding: 16px; }
+            .tabs { padding: 0 16px; overflow-x: auto; }
+            .form-grid { grid-template-columns: 1fr; }
+        }
+        
+        /* Loading */
+        .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--gray-200); border-top-color: var(--primary); border-radius: 50%; animation: spin .6s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .empty-state { padding: 40px; text-align: center; color: var(--gray-400); font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+    <div class="header-left">
+        <div class="logo">P</div>
+        <div>
+            <div class="header-title">Prestij Emlak</div>
+            <div class="header-sub">FSBO AI Arama Sistemi</div>
+        </div>
+    </div>
+    <div class="header-right">
+        <span class="last-update" id="lastUpdate"></span>
+        <button class="btn btn-primary" onclick="refreshData()">🔄 Yenile</button>
+    </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+    <div class="tab active" data-tab="overview" onclick="switchTab('overview')">📊 Genel Bakış</div>
+    <div class="tab" data-tab="leads" onclick="switchTab('leads')">🏠 İlanlar</div>
+    <div class="tab" data-tab="calls" onclick="switchTab('calls')">📞 Aramalar</div>
+    <div class="tab" data-tab="appointments" onclick="switchTab('appointments')">📅 Randevular</div>
+</div>
+
+<!-- DETAIL OVERLAY -->
+<div class="detail-overlay" id="detailOverlay" onclick="closeDetail()"></div>
+<div class="detail-panel" id="detailPanel">
+    <div class="detail-header">
+        <span class="panel-title" id="detailTitle">Detay</span>
+        <button class="btn btn-sm" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="detail-body" id="detailBody"></div>
+</div>
+
+<!-- ADD LEAD MODAL -->
+<div class="modal-overlay" id="addLeadModal">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="panel-title" id="modalTitle">➕ Yeni İlan Ekle</span>
+            <button class="btn btn-sm" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-grid" id="leadForm">
+                <div class="form-group">
+                    <label class="form-label">İlan Sahibi *</label>
+                    <input class="form-input" id="f_ilan_sahibi" placeholder="Ad Soyad">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Telefon *</label>
+                    <input class="form-input" id="f_telefon" placeholder="05XX XXX XXXX">
+                </div>
+                <div class="form-group full">
+                    <label class="form-label">İlan Başlığı *</label>
+                    <input class="form-input" id="f_baslik" placeholder="Örn: Keçiören'de 3+1 Satılık Daire">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">İl</label>
+                    <input class="form-input" id="f_il" placeholder="İl">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">İlçe</label>
+                    <input class="form-input" id="f_ilce" placeholder="İlçe">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Mahalle</label>
+                    <input class="form-input" id="f_mahalle" placeholder="Mahalle">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Fiyat (TL)</label>
+                    <input class="form-input" id="f_fiyat" type="number" placeholder="2500000">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">İşlem Türü</label>
+                    <select class="form-input" id="f_islem_turu">
+                        <option value="satilik">Satılık</option>
+                        <option value="kiralik">Kiralık</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Mülk Tipi</label>
+                    <select class="form-input" id="f_mulk_tipi">
+                        <option value="konut">Konut</option>
+                        <option value="arazi">Arazi</option>
+                        <option value="isyeri">İşyeri</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Metrekare</label>
+                    <input class="form-input" id="f_metrekare" type="number" placeholder="120">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Oda Sayısı</label>
+                    <input class="form-input" id="f_oda_sayisi" placeholder="3+1">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">İlan URL</label>
+                    <input class="form-input" id="f_ilan_url" placeholder="https://...">
+                </div>
+                <div class="form-group full">
+                    <label class="form-label">Açıklama</label>
+                    <textarea class="form-input" id="f_aciklama" placeholder="İlan detayları..."></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="closeModal()">İptal</button>
+            <button class="btn btn-primary" onclick="submitLead()">💾 Kaydet</button>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== CONTENT SECTIONS ==================== -->
+<div class="content">
+
+<!-- === OVERVIEW TAB === -->
+<div id="tab-overview" class="tab-content">
+    <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Toplam İlan</div><div class="stat-value" id="s_total">0</div></div>
+        <div class="stat-card"><div class="stat-label">Bekleyen</div><div class="stat-value orange" id="s_pending">0</div></div>
+        <div class="stat-card"><div class="stat-label">Arandı</div><div class="stat-value" id="s_called">0</div></div>
+        <div class="stat-card"><div class="stat-label">Randevu Alındı</div><div class="stat-value green" id="s_appointment">0</div></div>
+        <div class="stat-card"><div class="stat-label">İlgilenmiyor</div><div class="stat-value red" id="s_rejected">0</div></div>
+        <div class="stat-card"><div class="stat-label">Toplam Arama</div><div class="stat-value purple" id="s_calls">0</div></div>
+    </div>
+    <div class="panel">
+        <div class="panel-header"><span class="panel-title">Son Aramalar</span></div>
+        <table>
+            <thead><tr><th>Tarih</th><th>İlan Sahibi</th><th>Süre</th><th>Sonuç</th></tr></thead>
+            <tbody id="recentCallsBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- === LEADS TAB === -->
+<div id="tab-leads" class="tab-content" style="display:none">
+    <div class="panel">
+        <div class="panel-header">
+            <span class="panel-title">🏠 İlanlar</span>
+            <div class="filters">
+                <input class="filter-input" id="leadSearch" placeholder="🔍 Ara..." oninput="renderLeads()">
+                <select class="filter-input" id="leadStatusFilter" onchange="renderLeads()">
+                    <option value="">Tüm Durumlar</option>
+                    <option value="yeni">🆕 Yeni</option>
+                    <option value="aktarildi">📋 Aktarıldı</option>
+                    <option value="aranıyor">📞 Aranıyor</option>
+                    <option value="arandi">✅ Arandı</option>
+                    <option value="randevu_alindi">📅 Randevu Alındı</option>
+                    <option value="tekrar_ara">🔄 Tekrar Ara</option>
+                    <option value="ilgilenmiyor">❌ İlgilenmiyor</option>
+                    <option value="reddedildi">🚫 Reddedildi</option>
+                    <option value="ulasılamadı">📵 Ulaşılamadı</option>
+                </select>
+                <select class="filter-input" id="leadSortBy" onchange="renderLeads()">
+                    <option value="newest">En Yeni</option>
+                    <option value="oldest">En Eski</option>
+                    <option value="price_high">Fiyat ↓</option>
+                    <option value="price_low">Fiyat ↑</option>
+                </select>
+                <button class="btn btn-primary" onclick="openAddLead()">➕ İlan Ekle</button>
+            </div>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>İlan Sahibi</th>
+                    <th>Başlık</th>
+                    <th>Konum</th>
+                    <th>Fiyat</th>
+                    <th>Durum</th>
+                    <th>Son Arama</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody id="leadsBody"></tbody>
+        </table>
+        <div id="leadsEmpty" class="empty-state" style="display:none">Henüz ilan yok</div>
+    </div>
+</div>
+
+<!-- === CALLS TAB === -->
+<div id="tab-calls" class="tab-content" style="display:none">
+    <div class="panel">
+        <div class="panel-header">
+            <span class="panel-title">📞 Arama Kayıtları</span>
+            <div class="filters">
+                <input class="filter-input" id="callSearch" placeholder="🔍 İsim veya ID..." oninput="renderCalls()">
+                <select class="filter-input" id="callResultFilter" onchange="renderCalls()">
+                    <option value="">Tüm Sonuçlar</option>
+                    <option value="randevu">✅ Randevu</option>
+                    <option value="tekrar_ara">🔄 Tekrar Ara</option>
+                    <option value="ilgilenmiyor">❌ İlgilenmiyor</option>
+                    <option value="kisa_arama">⏱ Kısa Arama</option>
+                </select>
+            </div>
+        </div>
+        <table>
+            <thead>
+                <tr><th>Tarih</th><th>İlan Sahibi</th><th>İlan ID</th><th>Süre</th><th>Maliyet</th><th>Sonuç</th></tr>
+            </thead>
+            <tbody id="callsBody"></tbody>
+        </table>
+        <div id="callsEmpty" class="empty-state" style="display:none">Henüz arama kaydı yok</div>
+    </div>
+</div>
+
+<!-- === APPOINTMENTS TAB === -->
+<div id="tab-appointments" class="tab-content" style="display:none">
+    <div class="panel">
+        <div class="panel-header">
+            <span class="panel-title">📅 Randevular</span>
+        </div>
+        <table>
+            <thead>
+                <tr><th>Tarih</th><th>İlan Sahibi</th><th>Konum</th><th>Durum</th><th>Not</th></tr>
+            </thead>
+            <tbody id="appointmentsBody"></tbody>
+        </table>
+        <div id="appointmentsEmpty" class="empty-state" style="display:none">Henüz randevu yok</div>
+    </div>
+</div>
+
+</div><!-- /content -->
+
+<script>
+// ==================== CONFIG ====================
+const API_BASE = 'https://n8n.agentpartner.pro/webhook';
+let allLeads = [], allCalls = [], allAppointments = [], summaryData = {};
+let currentAudio = null; // Global audio ref to prevent GC issues
+let currentAudioCallId = null;
+
+// ==================== INIT ====================
+document.addEventListener('DOMContentLoaded', () => {
+    refreshData();
+    setInterval(refreshData, 60000);
+});
+
+// ==================== DATA LOADING ====================
+async function refreshData() {
+    try {
+        const res = await fetch(`${API_BASE}/fsbo-dashboard`);
+        const data = await res.json();
+        
+        // Handle both array response and object response
+        let payload = data;
+        if (Array.isArray(data)) payload = data[0] || {};
+        
+        summaryData = payload.summary || {};
+        allLeads = payload.leads || [];
+        allCalls = payload.calls || [];
+        allAppointments = payload.appointments || [];
+        
+        renderOverview();
+        renderLeads();
+        renderCalls();
+        renderAppointments();
+        renderRecentCalls();
+        
+        document.getElementById('lastUpdate').textContent = 'Güncellendi: ' + new Date().toLocaleTimeString('tr-TR');
+    } catch(e) {
+        console.error('Veri yükleme hatası:', e);
+    }
+}
+
+// ==================== TAB SWITCHING ====================
+function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+    document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('active');
+    document.getElementById('tab-' + tab).style.display = 'block';
+}
+
+// ==================== OVERVIEW ====================
+function renderOverview() {
+    const s = summaryData;
+    document.getElementById('s_total').textContent = s.toplam_ilan ?? allLeads.length;
+    document.getElementById('s_pending').textContent = s.bekleyen ?? 0;
+    document.getElementById('s_called').textContent = s.arandi ?? 0;
+    document.getElementById('s_appointment').textContent = s.randevu_alindi ?? 0;
+    document.getElementById('s_rejected').textContent = s.ilgilenmiyor ?? 0;
+    document.getElementById('s_calls').textContent = s.toplam_arama ?? allCalls.length;
+}
+
+function renderRecentCalls() {
+    const tbody = document.getElementById('recentCallsBody');
+    const recent = allCalls.slice(0, 5);
+    if (!recent.length) { tbody.innerHTML = '<tr><td colspan="4" class="empty-state">Henüz arama yok</td></tr>'; return; }
+    tbody.innerHTML = recent.map(c => `
+        <tr>
+            <td>${formatDate(c.created_at || c.arama_tarihi)}</td>
+            <td>${c.ilan_sahibi || c.lead_name || '-'}</td>
+            <td>${formatDuration(c.sure || c.duration)}</td>
+            <td>${getResultBadge(c.sonuc || c.result)}</td>
+        </tr>
+    `).join('');
+}

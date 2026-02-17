@@ -1,0 +1,19 @@
+http:
+  routers:
+    emlak-http:
+      rule: "Host(`emlak.agentpartner.pro`)"
+      entryPoints:
+        - http
+      service: emlak-svc
+    emlak-https:
+      rule: "Host(`emlak.agentpartner.pro`)"
+      entryPoints:
+        - https
+      service: emlak-svc
+      tls:
+        certResolver: letsencrypt
+  services:
+    emlak-svc:
+      loadBalancer:
+        servers:
+          - url: "http://10.0.1.5:80"

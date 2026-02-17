@@ -1,0 +1,5 @@
+dash_b64.txt
+write_b64.ps1
+*.tmp
+node_modules/
+.env
