@@ -216,8 +216,8 @@ tbody tr{transition:background .15s;cursor:pointer}tbody tr:hover{background:var
 .stat-mini-label{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
 .stat-mini-value{font-size:26px;font-weight:800;margin-top:4px}
 .stat-mini-sub{font-size:11px;color:var(--text2);margin-top:2px}
-.conversion-bar{display:flex;height:28px;border-radius:8px;overflow:hidden;margin:12px 0}
-.conversion-bar div{display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;min-width:2%}
+.conversion-bar{display:flex;height:36px;border-radius:8px;overflow:hidden;margin:12px 0}
+.conversion-bar div{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;min-width:4%;padding:0 8px;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -957,6 +957,7 @@ function renderConversionFunnel(){
   const randevu=s.toplam_randevu||0;
   const ilgilenmiyor=s.toplam_ilgilenmiyor||0;
   const tekrar=s.toplam_tekrar_aranacak||0;
+  const tamamlandi=arandi-randevu-ilgilenmiyor-tekrar;
   const bekleyen=total-arandi-ilgilenmiyor;
   if(total===0){el.innerHTML='';return;}
   const pctArandi=((arandi/total)*100).toFixed(0);
@@ -967,16 +968,19 @@ function renderConversionFunnel(){
       <span style="font-size:11px;color:var(--text2)">${total} ilan → ${arandi} arama → ${randevu} randevu</span>
     </div>
     <div class="conversion-bar">
-      ${randevu>0?`<div style="background:#10b981;width:${Math.max((randevu/total)*100,5)}%" title="${randevu} Randevu">✅ ${randevu}</div>`:''}
-      ${tekrar>0?`<div style="background:#f59e0b;width:${Math.max((tekrar/total)*100,5)}%" title="${tekrar} Tekrar Aranacak">🔄 ${tekrar}</div>`:''}
-      ${ilgilenmiyor>0?`<div style="background:#ef4444;width:${Math.max((ilgilenmiyor/total)*100,5)}%" title="${ilgilenmiyor} İlgilenmiyor">❌ ${ilgilenmiyor}</div>`:''}
-      ${(arandi-randevu-ilgilenmiyor-tekrar)>0?`<div style="background:#8b5cf6;width:${Math.max(((arandi-randevu-ilgilenmiyor-tekrar)/total)*100,5)}%" title="${arandi-randevu-ilgilenmiyor-tekrar} Tamamlandı">📞</div>`:''}
-      ${bekleyen>0?`<div style="background:#1e293b;width:${Math.max((bekleyen/total)*100,5)}%;color:var(--text2)" title="${bekleyen} Henüz Aranmadı">⏳ ${bekleyen}</div>`:''}
+      ${randevu>0?`<div style="background:#10b981;width:${Math.max((randevu/total)*100,6)}%" title="${randevu} Randevu">Randevu ${randevu}</div>`:''}
+      ${tekrar>0?`<div style="background:#f59e0b;width:${Math.max((tekrar/total)*100,6)}%" title="${tekrar} Tekrar Aranacak">Tekrar ${tekrar}</div>`:''}
+      ${ilgilenmiyor>0?`<div style="background:#ef4444;width:${Math.max((ilgilenmiyor/total)*100,6)}%" title="${ilgilenmiyor} İlgilenmiyor">Red ${ilgilenmiyor}</div>`:''}
+      ${tamamlandi>0?`<div style="background:#8b5cf6;width:${Math.max((tamamlandi/total)*100,6)}%" title="${tamamlandi} Görüşme Tamamlandı">Arandı ${tamamlandi}</div>`:''}
+      ${bekleyen>0?`<div style="background:#334155;width:${Math.max((bekleyen/total)*100,6)}%;color:var(--text2)" title="${bekleyen} Henüz Aranmadı">Bekleyen ${bekleyen}</div>`:''}
     </div>
-    <div style="display:flex;gap:16px;margin-top:8px;font-size:11px;color:var(--text2);flex-wrap:wrap">
-      <span>🎯 Arama oranı: <strong style="color:var(--accent)">%${pctArandi}</strong></span>
-      <span>✅ Randevu oranı: <strong style="color:var(--green)">%${pctRandevu}</strong></span>
-      ${tekrar>0?`<span>🔄 Tekrar aranacak: <strong style="color:var(--orange)">${tekrar}</strong></span>`:''}
+    <div style="display:flex;gap:20px;margin-top:10px;font-size:11px;flex-wrap:wrap">
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#10b981;margin-right:4px"></span>Randevu</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#f59e0b;margin-right:4px"></span>Tekrar Aranacak</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#ef4444;margin-right:4px"></span>İlgilenmiyor</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#8b5cf6;margin-right:4px"></span>Arandı</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#334155;margin-right:4px"></span>Bekleyen</span>
+      <span style="margin-left:auto;color:var(--text2)">Arama oranı: <strong style="color:var(--accent)">%${pctArandi}</strong> · Randevu oranı: <strong style="color:var(--green)">%${pctRandevu}</strong></span>
     </div>
   </div>`;
 }
