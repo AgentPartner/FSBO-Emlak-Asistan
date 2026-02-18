@@ -618,8 +618,30 @@ function leadRow(l,full){
 }
 
 function renderSummary(s){
-  const waCount=(allData&&allData.leads)?allData.leads.filter(l=>l.whatsapp_durumu&&l.whatsapp_durumu!=='bekliyor').length:0;
-  const c=[{label:'Toplam İlan',value:s.toplam_ilan,cls:'blue'},{label:'Bekleyen',value:s.bekleyen,cls:'orange'},{label:'Aktarıldı',value:s.aktarildi||0,cls:'cyan'},{label:'Randevu',value:s.randevu,cls:'green'},{label:'İlgilenmiyor',value:s.ilgilenmiyor,cls:'red'},{label:'WhatsApp',value:waCount,cls:'green'}];
+  const leads=(allData&&allData.leads)||[];
+  const counts={};
+  leads.forEach(l=>{const d=(l.durum||'yeni').toLowerCase();counts[d]=(counts[d]||0)+1;});
+  const toplam=leads.length;
+  const randevu=counts['randevu']||0;
+  const tekrar=counts['tekrar_aranacak']||0;
+  const aramaYapildi=counts['arama_yapildi']||0;
+  const aranacak=counts['aranacak']||0;
+  const aktarildi=(counts['aktarildi']||0)+(counts['aktarıldı']||0);
+  const yeni=counts['yeni']||0;
+  const ilgilenmiyor=counts['ilgilenmiyor']||0;
+  const aranmayacak=counts['aranmayacak']||0;
+  const waCount=leads.filter(l=>l.whatsapp_durumu&&l.whatsapp_durumu!=='bekliyor').length;
+  const c=[
+    {label:'Toplam İlan',value:toplam,cls:'blue'},
+    {label:'Randevu',value:randevu,cls:'green'},
+    {label:'Arama Yapıldı',value:aramaYapildi,cls:'purple'},
+    {label:'Tekrar Aranacak',value:tekrar,cls:'orange'},
+    {label:'Aranacak',value:aranacak,cls:'cyan'},
+    {label:'Aktarıldı',value:aktarildi,cls:'cyan'},
+    {label:'İlgilenmiyor',value:ilgilenmiyor,cls:'red'},
+    {label:'Aranmayacak',value:aranmayacak,cls:'pink'},
+    {label:'WhatsApp',value:waCount,cls:'green'}
+  ].filter(x=>x.value>0||x.label==='Toplam İlan'||x.label==='WhatsApp');
   document.getElementById('summaryCards').innerHTML=c.map(x=>`<div class="card ${x.cls}"><div class="card-label">${x.label}</div><div class="card-value">${x.value}</div></div>`).join('');
 }
 function renderLeads(leads){
