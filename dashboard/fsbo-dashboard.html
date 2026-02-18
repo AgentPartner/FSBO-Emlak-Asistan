@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Royal Emlak - FSBO Dashboard</title>
+<title>Nexus Realty - FSBO Dashboard</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%233b82f6'/%3E%3Cstop offset='100%25' stop-color='%2306b6d4'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Cpath d='M9 13.5c1.5 3 3.5 5 6.5 6.5l2-2c.3-.3.7-.3 1 0l3 2c.3.3.3.7 0 1l-2 2c-.2.2-.5.3-.7.2C12 20.5 8.5 12 11.8 8.7l2-2c.3-.3.7-.3 1 0l2 3c.3.3.3.7 0 1l-2 2c-.2.2-.3.5-.2.7z' fill='white' stroke='white' stroke-width='0.5'/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#0a0e17;--surface:#111827;--surface2:#1a2235;--border:#1e293b;--text:#e2e8f0;--text2:#94a3b8;--accent:#3b82f6;--green:#10b981;--orange:#f59e0b;--red:#ef4444;--purple:#8b5cf6;--cyan:#06b6d4;--pink:#ec4899}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -55,6 +56,13 @@ tbody tr{transition:background .15s;cursor:pointer}tbody tr:hover{background:var
 .badge-ilgilenmiyor{background:rgba(239,68,68,.15);color:var(--red)}.badge-ilgilenmiyor::before{background:var(--red)}
 .badge-aranmayacak{background:rgba(148,163,184,.15);color:var(--text2)}.badge-aranmayacak::before{background:var(--text2)}
 .badge-tekrar_aranacak{background:rgba(251,146,60,.15);color:#fb923c}.badge-tekrar_aranacak::before{background:#fb923c}
+/* WhatsApp badges */
+.wa-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600}
+.wa-badge.bekliyor{background:rgba(148,163,184,.12);color:var(--text2)}
+.wa-badge.gonderildi{background:rgba(37,211,102,.12);color:#25d366}
+.wa-badge.iletildi{background:rgba(37,211,102,.2);color:#25d366}
+.wa-badge.okundu{background:rgba(59,130,246,.15);color:var(--accent)}
+.wa-badge.hata{background:rgba(239,68,68,.12);color:var(--red)}
 .lead-tab{background:none;border:none;color:var(--text2);padding:12px 20px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;border-bottom:2px solid transparent;transition:all .2s}
 .lead-tab:hover{color:var(--text)}.lead-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
 .badge-satilik{background:rgba(16,185,129,.12);color:var(--green);font-size:11px;padding:2px 8px}
@@ -192,12 +200,30 @@ tbody tr{transition:background .15s;cursor:pointer}tbody tr:hover{background:var
 .period-tab.active{background:var(--accent);border-color:var(--accent);color:white}
 .report-empty{text-align:center;padding:40px;color:var(--text2);font-size:13px;opacity:.6}
 @media(max-width:768px){.header,.nav,.main{padding-left:16px;padding-right:16px}.cards{grid-template-columns:repeat(2,1fr)}.form-row{flex-direction:column;gap:0}.detail-panel{width:100%}.call-detail-grid{grid-template-columns:1fr}.report-grid{grid-template-columns:1fr}}
+/* WHATSAPP BADGE */
+.badge-wp-sent{background:rgba(37,211,102,.15);color:#25d366;font-size:11px;padding:2px 8px;border-radius:6px;display:inline-flex;align-items:center;gap:4px}
+.badge-wp-sent::before{content:'';width:6px;height:6px;border-radius:50%;background:#25d366}
+.badge-wp-read{background:rgba(37,211,102,.25);color:#25d366;font-size:11px;padding:2px 8px;border-radius:6px;display:inline-flex;align-items:center;gap:4px}
+.badge-wp-read::before{content:'';width:6px;height:6px;border-radius:50%;background:#25d366}
+.badge-wp-pending{background:rgba(148,163,184,.15);color:var(--text2);font-size:11px;padding:2px 8px;border-radius:6px;display:inline-flex;align-items:center;gap:4px}
+.badge-wp-pending::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--text2)}
+.badge-wp-none{color:var(--text2);font-size:11px;opacity:.5}
+/* CHART.JS CONTAINERS */
+.chartjs-container{position:relative;height:220px;padding:8px}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-mini{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;transition:all .3s}
+.stat-mini:hover{border-color:var(--accent);transform:translateY(-2px)}
+.stat-mini-label{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.stat-mini-value{font-size:26px;font-weight:800;margin-top:4px}
+.stat-mini-sub{font-size:11px;color:var(--text2);margin-top:2px}
+.conversion-bar{display:flex;height:28px;border-radius:8px;overflow:hidden;margin:12px 0}
+.conversion-bar div{display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;min-width:2%}
 </style>
 </head>
 <body>
 <div class="loading-overlay" id="loading"><div class="loader"></div></div>
 <div class="header">
-  <div class="header-left"><div class="logo">R</div><h1>Royal <span>Emlak</span> — FSBO Dashboard</h1></div>
+  <div class="header-left"><div class="logo">N</div><h1>Nexus <span>Realty</span> — FSBO Dashboard</h1></div>
   <div class="header-right">
     <div class="status-dot"></div>
     <span class="last-update" id="lastUpdate">Yükleniyor...</span>
@@ -215,6 +241,8 @@ tbody tr{transition:background .15s;cursor:pointer}tbody tr:hover{background:var
   <div id="geriAramaUyari" style="display:none;margin-bottom:8px"></div>
   <div class="section active" id="sec-overview">
     <div class="cards" id="summaryCards"></div>
+    <!-- CONVERSION FUNNEL BAR -->
+    <div id="conversionFunnel" style="margin-bottom:20px"></div>
     <div class="report-grid">
       <div class="report-block">
         <h3>📊 Performans Özeti</h3>
@@ -226,12 +254,15 @@ tbody tr{transition:background .15s;cursor:pointer}tbody tr:hover{background:var
         <div class="report-stats" id="reportStats"></div>
       </div>
       <div class="report-block">
-        <h3>📈 Son 14 Gün <span>Günlük Arama Trendi</span></h3>
-        <div id="trendChart"></div>
+        <h3>📈 Son 14 Gün <span>Günlük Arama &amp; Randevu Trendi</span></h3>
+        <div class="chartjs-container"><canvas id="trendCanvas"></canvas></div>
       </div>
       <div class="report-block">
         <h3>🎯 Sonuç Dağılımı</h3>
-        <div id="pieChart"></div>
+        <div style="display:flex;align-items:center;gap:16px">
+          <div style="width:180px;height:180px"><canvas id="pieCanvas"></canvas></div>
+          <div id="pieLegendCustom" style="flex:1"></div>
+        </div>
       </div>
       <div class="report-block">
         <h3>💰 Maliyet Analizi</h3>
@@ -240,7 +271,7 @@ tbody tr{transition:background .15s;cursor:pointer}tbody tr:hover{background:var
     </div>
     <div class="table-container">
       <div class="table-header"><h2>📋 Son İlanlar</h2><button class="action-btn" onclick="openModal()">+ Yeni İlan</button></div>
-      <div style="overflow-x:auto"><table><thead><tr><th>İlan ID</th><th>Başlık</th><th>İşlem</th><th>Tip</th><th>Fiyat</th><th>İl / İlçe</th><th>İlan Sahibi</th><th>İlan Tarihi</th><th>Kayıt</th><th>Durum</th></tr></thead><tbody id="overviewLeads"></tbody></table></div>
+      <div style="overflow-x:auto"><table><thead><tr><th>İlan ID</th><th>Başlık</th><th>İşlem</th><th>Tip</th><th>Fiyat</th><th>İl / İlçe</th><th>İlan Sahibi</th><th>İlan Tarihi</th><th>Kayıt</th><th>Durum</th><th>📱 WA</th></tr></thead><tbody id="overviewLeads"></tbody></table></div>
     </div>
   </div>
   <div class="section" id="sec-leads">
@@ -248,7 +279,7 @@ tbody tr{transition:background .15s;cursor:pointer}tbody tr:hover{background:var
       <div class="table-header"><h2>📋 Tüm İlanlar</h2><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><div id="bulkBar" style="display:none;background:var(--red);padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;white-space:nowrap" onclick="bulkDelete()">🗑️ <span id="bulkCount">0</span> ilan sil</div><select id="leadDurum" onchange="filterLeads()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:8px;font-size:12px"></select><select id="leadKategori" onchange="filterLeads()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:8px;font-size:12px"><option value="">Tüm Kategoriler</option></select><select id="leadIslem" onchange="filterLeads()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:8px;font-size:12px"><option value="">Tüm İşlemler</option><option value="satilik">Satılık</option><option value="kiralik">Kiralık</option></select><input type="text" class="table-search" placeholder="İlan ara..." id="leadSearch" oninput="filterLeads()"><button class="action-btn" style="background:var(--orange);color:#000;font-weight:700" onclick="openBatchCallModal()">📞 Toplu Arama</button><button class="action-btn" onclick="openModal()">+ Yeni İlan</button></div></div>
       <div style="display:flex;gap:0;padding:0 20px;border-bottom:1px solid var(--border)"><button class="lead-tab active" id="tabAktif" onclick="switchLeadTab('aktif')">✅ Aktif <span id="tabAktifCount" style="background:var(--accent);color:#fff;padding:1px 8px;border-radius:10px;font-size:11px;margin-left:4px">0</span></button><button class="lead-tab" id="tabPasif" onclick="switchLeadTab('pasif')">⛔ Pasif <span id="tabPasifCount" style="background:var(--text2);color:#fff;padding:1px 8px;border-radius:10px;font-size:11px;margin-left:4px">0</span></button></div>
       <div id="batchProgress" style="display:none;padding:12px 20px;background:linear-gradient(135deg,rgba(245,158,11,.1),rgba(59,130,246,.1));border-bottom:1px solid var(--border)"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span id="batchStatusText" style="font-size:13px;font-weight:600">📞 Toplu arama devam ediyor...</span><button onclick="cancelBatchCall()" style="background:var(--red);color:#fff;border:none;padding:4px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">⏹ Durdur</button></div><div style="background:var(--surface2);border-radius:8px;height:8px;overflow:hidden"><div id="batchProgressBar" style="height:100%;background:linear-gradient(90deg,var(--orange),var(--green));border-radius:8px;transition:width .5s ease;width:0%"></div></div><div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--text2)"><span id="batchDetail">0/0 arandı</span><span id="batchEta">Tahmini süre: -</span></div></div>
-      <div style="overflow-x:auto"><table><thead><tr><th style="width:32px"><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)"></th><th>İlan ID</th><th>Başlık</th><th>İşlem</th><th>Tip</th><th>Fiyat</th><th>İl / İlçe</th><th>Telefon</th><th>İlan Sahibi</th><th>İlan Tarihi</th><th>Kayıt</th><th>Durum</th></tr></thead><tbody id="leadsTable"></tbody></table></div>
+      <div style="overflow-x:auto"><table><thead><tr><th style="width:32px"><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)"></th><th>İlan ID</th><th>Başlık</th><th>İşlem</th><th>Tip</th><th>Fiyat</th><th>İl / İlçe</th><th>Telefon</th><th>İlan Sahibi</th><th>İlan Tarihi</th><th>Kayıt</th><th>Durum</th><th>📱 WA</th></tr></thead><tbody id="leadsTable"></tbody></table></div>
     </div>
   </div>
   <div class="section" id="sec-calls"><div class="table-container"><div class="table-header"><h2>📞 Arama Geçmişi</h2><input type="text" class="call-search" placeholder="Arama ara..." id="callSearch" oninput="filterCalls()"></div><div id="callsContent"></div></div></div>
@@ -578,14 +609,17 @@ async function callLead(){
 
 function shortDate(d){if(!d||d==='-')return'-';const dt=new Date(d);if(isNaN(dt))return'-';const day=String(dt.getUTCDate()).padStart(2,'0');const mon=String(dt.getUTCMonth()+1).padStart(2,'0');const yr=String(dt.getUTCFullYear());return day+'.'+mon+'.'+yr;}
 function shortDateTR(d){if(!d||d==='-')return'-';let ds=String(d);if(!ds.endsWith('Z')&&!ds.includes('+'))ds+='Z';const dt=new Date(ds);if(isNaN(dt))return'-';const tr=new Date(dt.getTime()+3*3600000);const day=String(tr.getUTCDate()).padStart(2,'0');const mon=String(tr.getUTCMonth()+1).padStart(2,'0');const yr=String(tr.getUTCFullYear());return day+'.'+mon+'.'+yr;}
+function waBadge(d){const map={bekliyor:{icon:'⏳',label:'Bekliyor',cls:'bekliyor'},gonderildi:{icon:'✓',label:'Gönderildi',cls:'gonderildi'},iletildi:{icon:'✓✓',label:'İletildi',cls:'iletildi'},okundu:{icon:'✓✓',label:'Okundu',cls:'okundu'},hata:{icon:'✕',label:'Hata',cls:'hata'}};const m=map[d]||map.bekliyor;return`<span class="wa-badge ${m.cls}">${m.icon} ${m.label}</span>`;}
 function leadRow(l,full){
   const click=`onclick="openDetail(allData.leads.find(x=>x.ilan_id==='${l.ilan_id}'))"`;
-  if(full)return`<tr><td onclick="event.stopPropagation()"><input type="checkbox" class="lead-cb" value="${l.ilan_id}" onchange="updateBulkBar()"></td><td ${click}><strong>${l.ilan_id}</strong></td><td ${click}>${l.baslik||'-'}</td><td ${click}>${islemBadge(l.islem_turu)}</td><td ${click}>${l.mulk_tipi||'-'}</td><td ${click} class="fiyat">${formatPrice(l.fiyat)}</td><td ${click}>${l.il||'-'} / ${l.ilce||'-'}</td><td><a class="phone-link" href="tel:${l.telefon}">${formatPhone(l.telefon)}</a></td><td ${click}>${l.ilan_sahibi||'-'}</td><td ${click}>${shortDate(l.ilan_tarihi)}</td><td ${click}>${shortDateTR(l.created_at)}</td><td ${click}>${badge(l.durum)}</td></tr>`;
-  return`<tr ${click}><td><strong>${l.ilan_id}</strong></td><td>${l.baslik||'-'}</td><td>${islemBadge(l.islem_turu)}</td><td>${l.mulk_tipi||'-'}</td><td class="fiyat">${formatPrice(l.fiyat)}</td><td>${l.il||'-'} / ${l.ilce||'-'}</td><td>${l.ilan_sahibi||'-'}</td><td>${shortDate(l.ilan_tarihi)}</td><td>${shortDateTR(l.created_at)}</td><td>${badge(l.durum)}</td></tr>`;
+  const wa=waBadge(l.whatsapp_durumu||'bekliyor');
+  if(full)return`<tr><td onclick="event.stopPropagation()"><input type="checkbox" class="lead-cb" value="${l.ilan_id}" onchange="updateBulkBar()"></td><td ${click}><strong>${l.ilan_id}</strong></td><td ${click}>${l.baslik||'-'}</td><td ${click}>${islemBadge(l.islem_turu)}</td><td ${click}>${l.mulk_tipi||'-'}</td><td ${click} class="fiyat">${formatPrice(l.fiyat)}</td><td ${click}>${l.il||'-'} / ${l.ilce||'-'}</td><td><a class="phone-link" href="tel:${l.telefon}">${formatPhone(l.telefon)}</a></td><td ${click}>${l.ilan_sahibi||'-'}</td><td ${click}>${shortDate(l.ilan_tarihi)}</td><td ${click}>${shortDateTR(l.created_at)}</td><td ${click}>${badge(l.durum)}</td><td ${click}>${wa}</td></tr>`;
+  return`<tr ${click}><td><strong>${l.ilan_id}</strong></td><td>${l.baslik||'-'}</td><td>${islemBadge(l.islem_turu)}</td><td>${l.mulk_tipi||'-'}</td><td class="fiyat">${formatPrice(l.fiyat)}</td><td>${l.il||'-'} / ${l.ilce||'-'}</td><td>${l.ilan_sahibi||'-'}</td><td>${shortDate(l.ilan_tarihi)}</td><td>${shortDateTR(l.created_at)}</td><td>${badge(l.durum)}</td><td>${wa}</td></tr>`;
 }
 
 function renderSummary(s){
-  const c=[{label:'Toplam İlan',value:s.toplam_ilan,cls:'blue'},{label:'Bekleyen',value:s.bekleyen,cls:'orange'},{label:'Aktarıldı',value:s.aktarildi||0,cls:'cyan'},{label:'Randevu',value:s.randevu,cls:'green'},{label:'İlgilenmiyor',value:s.ilgilenmiyor,cls:'red'}];
+  const waCount=(allData&&allData.leads)?allData.leads.filter(l=>l.whatsapp_durumu&&l.whatsapp_durumu!=='bekliyor').length:0;
+  const c=[{label:'Toplam İlan',value:s.toplam_ilan,cls:'blue'},{label:'Bekleyen',value:s.bekleyen,cls:'orange'},{label:'Aktarıldı',value:s.aktarildi||0,cls:'cyan'},{label:'Randevu',value:s.randevu,cls:'green'},{label:'İlgilenmiyor',value:s.ilgilenmiyor,cls:'red'},{label:'WhatsApp',value:waCount,cls:'green'}];
   document.getElementById('summaryCards').innerHTML=c.map(x=>`<div class="card ${x.cls}"><div class="card-label">${x.label}</div><div class="card-value">${x.value}</div></div>`).join('');
 }
 function renderLeads(leads){
@@ -769,7 +803,7 @@ function renderAppointments(a){
   items=items.filter(i=>!i.duplicate);
   if(!items.length){document.getElementById('appointmentsContent').innerHTML='<div class="empty"><div class="empty-icon">📅</div>Henüz randevu yok</div>';return;}
   items.sort((a,b)=>new Date(b.arama_tarihi||0)-new Date(a.arama_tarihi||0));
-  let html=`<div style="overflow-x:auto"><table><thead><tr><th>📅 RANDEVU TARİHİ</th><th>İLAN</th><th>KİŞİ</th><th>TELEFON</th><th>TÜR</th><th>KONUM / NOT</th><th>DURUM</th><th>İŞLEM</th></tr></thead><tbody>`;
+  let html=`<div style="overflow-x:auto"><table><thead><tr><th>📅 RANDEVU TARİHİ</th><th>İLAN</th><th>KİŞİ</th><th>TELEFON</th><th>TÜR</th><th>KONUM / NOT</th><th>DURUM</th><th>📱 WA</th><th>İŞLEM</th></tr></thead><tbody>`;
   items.forEach((x,idx)=>{
     const dt=x.randevu_tarihi?new Date(x.randevu_tarihi):null;
     const dtVal=dt?dt.toISOString().slice(0,16):'';
@@ -783,9 +817,10 @@ function renderAppointments(a){
       <td><span style="font-size:12px">${x.randevu_turu}</span></td>
       <td style="font-size:12px;max-width:250px" title="${(x.notlar||'').replace(/"/g,'&quot;')}">${x.notlar||'-'}</td>
       <td>${rdDurum}</td>
+      <td>${waBadge(x.whatsapp_durumu||'bekliyor')}</td>
       <td><button onclick="editAppt(${idx})" style="background:var(--accent);color:#fff;border:none;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer">✏️ Düzenle</button></td>
     </tr>
-    <tr id="appt-edit-${idx}" style="display:none;background:var(--surface2)"><td colspan="8" style="padding:16px 20px">
+    <tr id="appt-edit-${idx}" style="display:none;background:var(--surface2)"><td colspan="9" style="padding:16px 20px">
       <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:end">
         <div style="flex:1;min-width:200px"><label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">📅 Randevu Tarih & Saat</label><input type="datetime-local" id="appt-dt-${idx}" value="${dtVal}" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px"></div>
         <div style="flex:2;min-width:250px"><label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">📍 Konum / Not</label><input type="text" id="appt-note-${idx}" value="${(x.notlar||'').replace(/"/g,'&quot;')}" placeholder="Örn: Dairede yerinde değerleme - Avenir Talas 180 A Blok" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px"></div>
@@ -831,43 +866,119 @@ function renderReport(){
     <div class="report-stat purple"><div class="report-stat-label">Başarı</div><div class="report-stat-value">%${donusum}</div><div class="report-stat-sub">randevu oranı</div></div>
   `;
 }
+let trendChartInstance=null;
+let pieChartInstance=null;
 function renderTrendChart(){
-  const el=document.getElementById('trendChart');
-  if(!allData||!allData.report||!allData.report.gunluk_trend||!allData.report.gunluk_trend.length){el.innerHTML='<div class="report-empty">Henüz trend verisi yok<br><span style="font-size:11px">Aramalar başladığında burada günlük grafik görünecek</span></div>';return;}
+  const canvas=document.getElementById('trendCanvas');
+  if(!canvas)return;
+  if(!allData||!allData.report||!allData.report.gunluk_trend||!allData.report.gunluk_trend.length){
+    if(trendChartInstance){trendChartInstance.destroy();trendChartInstance=null;}
+    canvas.parentElement.innerHTML='<div class="report-empty">Henüz trend verisi yok<br><span style="font-size:11px">Aramalar başladığında burada günlük grafik görünecek</span></div>';
+    return;
+  }
   const data=allData.report.gunluk_trend;
-  const maxArama=Math.max(...data.map(d=>d.arama),1);
-  const barH=140;
-  let html='<div class="chart-container">';
-  data.forEach(d=>{
-    const h1=Math.max((d.arama/maxArama)*barH,2);
-    const h2=Math.max((d.randevu/maxArama)*barH,0);
-    const dt=new Date(d.tarih);
-    const label=dt.toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit'});
-    html+=`<div class="chart-bar-group">
-      <div class="chart-bar-value">${d.arama}</div>
-      <div style="display:flex;gap:2px;align-items:flex-end;width:100%;height:${barH}px">
-        <div class="chart-bar arama" style="height:${h1}px;flex:1" title="${d.arama} arama"></div>
-        ${d.randevu>0?`<div class="chart-bar randevu" style="height:${h2}px;flex:1" title="${d.randevu} randevu"></div>`:''}
-      </div>
-      <div class="chart-bar-label">${label}</div>
-    </div>`;
+  const labels=data.map(d=>{const dt=new Date(d.tarih);return dt.toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit'});});
+  const aramaData=data.map(d=>d.arama);
+  const randevuData=data.map(d=>d.randevu);
+  if(trendChartInstance){trendChartInstance.destroy();}
+  const ctx=canvas.getContext('2d');
+  const aramaGrad=ctx.createLinearGradient(0,0,0,200);
+  aramaGrad.addColorStop(0,'rgba(59,130,246,0.3)');aramaGrad.addColorStop(1,'rgba(59,130,246,0.02)');
+  const randevuGrad=ctx.createLinearGradient(0,0,0,200);
+  randevuGrad.addColorStop(0,'rgba(16,185,129,0.3)');randevuGrad.addColorStop(1,'rgba(16,185,129,0.02)');
+  trendChartInstance=new Chart(ctx,{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'Arama',data:aramaData,borderColor:'#3b82f6',backgroundColor:aramaGrad,fill:true,tension:.4,borderWidth:2.5,pointRadius:4,pointHoverRadius:7,pointBackgroundColor:'#3b82f6',pointBorderColor:'#111827',pointBorderWidth:2},
+      {label:'Randevu',data:randevuData,borderColor:'#10b981',backgroundColor:randevuGrad,fill:true,tension:.4,borderWidth:2.5,pointRadius:4,pointHoverRadius:7,pointBackgroundColor:'#10b981',pointBorderColor:'#111827',pointBorderWidth:2}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',font:{family:'Plus Jakarta Sans',size:11,weight:'600'},usePointStyle:true,pointStyle:'circle',padding:16}},
+        tooltip:{backgroundColor:'#1a2235',titleColor:'#e2e8f0',bodyColor:'#94a3b8',borderColor:'#1e293b',borderWidth:1,padding:10,cornerRadius:8,titleFont:{family:'Plus Jakarta Sans',weight:'700'},bodyFont:{family:'Plus Jakarta Sans'}}},
+      scales:{x:{grid:{color:'rgba(30,41,59,0.5)',drawBorder:false},ticks:{color:'#64748b',font:{family:'Plus Jakarta Sans',size:10}}},
+        y:{beginAtZero:true,grid:{color:'rgba(30,41,59,0.5)',drawBorder:false},ticks:{color:'#64748b',font:{family:'Plus Jakarta Sans',size:10},stepSize:1}}}
+    }
   });
-  html+='</div><div class="chart-legend"><div class="chart-legend-item"><div class="chart-legend-dot" style="background:var(--accent)"></div>Arama</div><div class="chart-legend-item"><div class="chart-legend-dot" style="background:var(--green)"></div>Randevu</div></div>';
-  el.innerHTML=html;
 }
 function renderPieChart(){
-  const el=document.getElementById('pieChart');
-  if(!allData||!allData.report||!allData.report.sonuc_dagilimi||!allData.report.sonuc_dagilimi.length){el.innerHTML='<div class="report-empty">Henüz sonuç verisi yok<br><span style="font-size:11px">Aramalar başladığında burada dağılım görünecek</span></div>';return;}
+  const canvas=document.getElementById('pieCanvas');
+  const legendEl=document.getElementById('pieLegendCustom');
+  if(!canvas||!legendEl)return;
+  if(!allData||!allData.report||!allData.report.sonuc_dagilimi||!allData.report.sonuc_dagilimi.length){
+    if(pieChartInstance){pieChartInstance.destroy();pieChartInstance=null;}
+    canvas.parentElement.parentElement.innerHTML='<div class="report-empty">Henüz sonuç verisi yok<br><span style="font-size:11px">Aramalar başladığında burada dağılım görünecek</span></div>';
+    return;
+  }
   const data=allData.report.sonuc_dagilimi;
   const total=data.reduce((s,d)=>s+Number(d.sayi),0);
-  const colors={'Randevu alindi':'#10b981','Tekrar aranacak':'#f59e0b','Ilgilenmiyor':'#ef4444','Gorusme tamamlandi':'#8b5cf6','Kisa arama':'#64748b'};
-  const labels={'Randevu alindi':'Randevu','Tekrar aranacak':'Tekrar Ara','Ilgilenmiyor':'İlgilenmiyor','Gorusme tamamlandi':'Tamamlandı','Kisa arama':'Kısa Arama'};
-  let gradParts=[];let cumPct=0;
-  data.forEach(d=>{const pct=(d.sayi/total)*100;const color=colors[d.sonuc]||'#475569';gradParts.push(`${color} ${cumPct}% ${cumPct+pct}%`);cumPct+=pct;});
-  const grad=`conic-gradient(${gradParts.join(',')})`;
-  let legendHtml='';
-  data.forEach(d=>{const color=colors[d.sonuc]||'#475569';const label=labels[d.sonuc]||d.sonuc;legendHtml+=`<div class="pie-legend-item"><div class="pie-legend-dot" style="background:${color}"></div><span class="pie-legend-label">${label}</span><span class="pie-legend-value">${d.sayi}</span></div>`;});
-  el.innerHTML=`<div class="pie-container"><div class="pie-chart" style="background:${grad}"><div class="pie-center"><div class="pie-center-value">${total}</div><div class="pie-center-label">toplam</div></div></div><div class="pie-legend">${legendHtml}</div></div>`;
+  const colorMap={'Randevu alindi':'#10b981','Tekrar aranacak':'#f59e0b','Ilgilenmiyor':'#ef4444','Gorusme tamamlandi':'#8b5cf6','Kisa arama':'#64748b'};
+  const labelMap={'Randevu alindi':'Randevu','Tekrar aranacak':'Tekrar Ara','Ilgilenmiyor':'İlgilenmiyor','Gorusme tamamlandi':'Tamamlandı','Kisa arama':'Kısa Arama'};
+  const colors=data.map(d=>colorMap[d.sonuc]||'#475569');
+  const labels=data.map(d=>labelMap[d.sonuc]||d.sonuc);
+  const values=data.map(d=>Number(d.sayi));
+  if(pieChartInstance){pieChartInstance.destroy();}
+  pieChartInstance=new Chart(canvas.getContext('2d'),{
+    type:'doughnut',
+    data:{labels,datasets:[{data:values,backgroundColor:colors,borderColor:'#111827',borderWidth:3,hoverBorderColor:'#1a2235',hoverOffset:6}]},
+    options:{responsive:true,maintainAspectRatio:true,cutout:'65%',
+      plugins:{legend:{display:false},
+        tooltip:{backgroundColor:'#1a2235',titleColor:'#e2e8f0',bodyColor:'#94a3b8',borderColor:'#1e293b',borderWidth:1,padding:10,cornerRadius:8,
+          callbacks:{label:function(ctx){const pct=((ctx.raw/total)*100).toFixed(1);return ctx.label+': '+ctx.raw+' (%'+pct+')';}}
+        }
+      }
+    }
+  });
+  // Custom legend
+  let lhtml='';
+  data.forEach((d,i)=>{
+    const pct=((d.sayi/total)*100).toFixed(0);
+    const color=colors[i];
+    const label=labels[i];
+    lhtml+=`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+      <div style="width:10px;height:10px;border-radius:3px;background:${color};flex-shrink:0"></div>
+      <span style="font-size:12px;color:var(--text2);flex:1">${label}</span>
+      <span style="font-size:13px;font-weight:700;min-width:24px;text-align:right">${d.sayi}</span>
+      <span style="font-size:11px;color:var(--text2);min-width:36px;text-align:right">%${pct}</span>
+    </div>`;
+  });
+  lhtml+=`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;margin-top:4px">
+    <span style="font-size:12px;color:var(--text);font-weight:700;flex:1">Toplam</span>
+    <span style="font-size:15px;font-weight:800;color:var(--accent)">${total}</span>
+  </div>`;
+  legendEl.innerHTML=lhtml;
+}
+// CONVERSION FUNNEL
+function renderConversionFunnel(){
+  const el=document.getElementById('conversionFunnel');
+  if(!el||!allData||!allData.summary)return;
+  const s=allData.summary;
+  const total=s.toplam_ilan||0;
+  const arandi=s.toplam_arama||0;
+  const randevu=s.toplam_randevu||0;
+  const ilgilenmiyor=s.toplam_ilgilenmiyor||0;
+  const tekrar=s.toplam_tekrar_aranacak||0;
+  const bekleyen=total-arandi-ilgilenmiyor;
+  if(total===0){el.innerHTML='';return;}
+  const pctArandi=((arandi/total)*100).toFixed(0);
+  const pctRandevu=arandi>0?((randevu/arandi)*100).toFixed(0):'0';
+  el.innerHTML=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 20px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <span style="font-size:13px;font-weight:700">📊 Dönüşüm Hunisi</span>
+      <span style="font-size:11px;color:var(--text2)">${total} ilan → ${arandi} arama → ${randevu} randevu</span>
+    </div>
+    <div class="conversion-bar">
+      ${randevu>0?`<div style="background:#10b981;width:${Math.max((randevu/total)*100,5)}%" title="${randevu} Randevu">✅ ${randevu}</div>`:''}
+      ${tekrar>0?`<div style="background:#f59e0b;width:${Math.max((tekrar/total)*100,5)}%" title="${tekrar} Tekrar Aranacak">🔄 ${tekrar}</div>`:''}
+      ${ilgilenmiyor>0?`<div style="background:#ef4444;width:${Math.max((ilgilenmiyor/total)*100,5)}%" title="${ilgilenmiyor} İlgilenmiyor">❌ ${ilgilenmiyor}</div>`:''}
+      ${(arandi-randevu-ilgilenmiyor-tekrar)>0?`<div style="background:#8b5cf6;width:${Math.max(((arandi-randevu-ilgilenmiyor-tekrar)/total)*100,5)}%" title="${arandi-randevu-ilgilenmiyor-tekrar} Tamamlandı">📞</div>`:''}
+      ${bekleyen>0?`<div style="background:#1e293b;width:${Math.max((bekleyen/total)*100,5)}%;color:var(--text2)" title="${bekleyen} Henüz Aranmadı">⏳ ${bekleyen}</div>`:''}
+    </div>
+    <div style="display:flex;gap:16px;margin-top:8px;font-size:11px;color:var(--text2);flex-wrap:wrap">
+      <span>🎯 Arama oranı: <strong style="color:var(--accent)">%${pctArandi}</strong></span>
+      <span>✅ Randevu oranı: <strong style="color:var(--green)">%${pctRandevu}</strong></span>
+      ${tekrar>0?`<span>🔄 Tekrar aranacak: <strong style="color:var(--orange)">${tekrar}</strong></span>`:''}
+    </div>
+  </div>`;
 }
 function renderCostStats(){
   const el=document.getElementById('costStats');
@@ -909,7 +1020,7 @@ async function submitLead(){
 
 async function loadData(){
   const btn=document.querySelector('.refresh-btn');btn.classList.add('loading');
-  try{const res=await fetch(API);const json=await res.json();const d=json[0]?.data||json.data;allData=d;renderSummary(d.summary);renderLeads(d.leads);const audioPlaying=document.querySelector('audio')&&[...document.querySelectorAll('audio')].some(a=>!a.paused);const callDetailOpen=document.querySelector('.call-expand.open');if(!audioPlaying&&!callDetailOpen){renderCalls(d.calls);}renderAppointments(d.appointments);renderReport();renderTrendChart();renderPieChart();renderCostStats();document.getElementById('lastUpdate').textContent='Son: '+new Date().toLocaleTimeString('tr-TR');}
+  try{const res=await fetch(API);const json=await res.json();const d=json[0]?.data||json.data;allData=d;renderSummary(d.summary);renderLeads(d.leads);const audioPlaying=document.querySelector('audio')&&[...document.querySelectorAll('audio')].some(a=>!a.paused);const callDetailOpen=document.querySelector('.call-expand.open');if(!audioPlaying&&!callDetailOpen){renderCalls(d.calls);}renderAppointments(d.appointments);renderReport();renderTrendChart();renderPieChart();renderCostStats();renderConversionFunnel();document.getElementById('lastUpdate').textContent='Son: '+new Date().toLocaleTimeString('tr-TR');}
   catch(e){console.error(e);document.getElementById('lastUpdate').textContent='Hata: '+e.message;}
   btn.classList.remove('loading');document.getElementById('loading').classList.add('hidden');
 }
