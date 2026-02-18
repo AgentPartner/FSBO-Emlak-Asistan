@@ -320,7 +320,17 @@ tbody tr{transition:background .15s;cursor:pointer}tbody tr:hover{background:var
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
       <div class="table-container">
         <div class="table-header"><h2>🎯 Kalite Özeti</h2></div>
-        <div id="qualitySummary" style="padding:16px"><div class="empty">Henüz kalite puanlaması yapılmadı.<br><span style="font-size:11px">Aramalar puanlandığında burada istatistikler görünecek</span></div></div>
+        <div id="qualitySummary" style="padding:16px"><div class="empty">Henüz kalite puanlaması yapılmadı.</div></div>
+      </div>
+      <div class="table-container">
+        <div class="table-header"><h2>📈 Performans Trendi</h2></div>
+        <div id="qualityTrend" style="padding:16px"><div class="empty">Veri bekleniyor...</div></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <div class="table-container">
+        <div class="table-header"><h2>💡 Geliştirme Önerileri</h2></div>
+        <div id="qualityAdvice" style="padding:16px"><div class="empty">Veri bekleniyor...</div></div>
       </div>
       <div class="table-container">
         <div class="table-header"><h2>🧪 A/B Test Sonuçları</h2></div>
@@ -1064,38 +1074,157 @@ function renderConversionFunnel(){
 function renderQuality(){
   const qualityEl=document.getElementById('qualityTable');
   const summaryEl=document.getElementById('qualitySummary');
+  const trendEl=document.getElementById('qualityTrend');
+  const adviceEl=document.getElementById('qualityAdvice');
   const abEl=document.getElementById('abTestResults');
   if(!allData)return;
   
-  // Quality Summary
   const qData=allData.quality||[];
+  const cats=['selamlama_puan','ihtiyac_analizi_puan','ikna_becerisi_puan','itiraz_yonetimi_puan','randevu_teklifi_puan','kapanma_puan','dogallik_puan','profesyonellik_puan'];
+  const catNames=['Selamlama','İhtiyaç Analizi','İkna Becerisi','İtiraz Yönetimi','Randevu Teklifi','Kapanış','Doğallık','Profesyonellik'];
+  const catIcons=['👋','🔍','💬','🛡️','📅','🤝','🎭','👔'];
+  
+  // Helper: calc averages for subset
+  function calcAvgs(subset){
+    if(!subset.length)return{total:0,cats:cats.map(()=>0)};
+    const total=Math.round(subset.reduce((s,q)=>s+q.toplam_puan,0)/subset.length);
+    const catAvgs=cats.map(c=>Math.round(subset.reduce((s,q)=>s+(q[c]||0),0)/subset.length*10)/10);
+    return{total,cats:catAvgs};
+  }
+  
+  // ===== QUALITY SUMMARY =====
   if(qData.length>0&&summaryEl){
-    const avgTotal=Math.round(qData.reduce((s,q)=>s+q.toplam_puan,0)/qData.length);
-    const cats=['selamlama_puan','ihtiyac_analizi_puan','ikna_becerisi_puan','itiraz_yonetimi_puan','randevu_teklifi_puan','kapanma_puan','dogallik_puan','profesyonellik_puan'];
-    const catNames=['Selamlama','İhtiyaç Analizi','İkna Becerisi','İtiraz Yönetimi','Randevu Teklifi','Kapanış','Doğallık','Profesyonellik'];
-    const avgs=cats.map(c=>Math.round(qData.reduce((s,q)=>s+(q[c]||0),0)/qData.length*10)/10);
-    const barColor=avgTotal>=70?'var(--green)':avgTotal>=50?'var(--orange)':'var(--red)';
+    const all=calcAvgs(qData);
+    const barColor=all.total>=70?'var(--green)':all.total>=50?'var(--orange)':'var(--red)';
     let html=`<div style="text-align:center;margin-bottom:16px">
-      <div style="font-size:48px;font-weight:800;color:${barColor}">${avgTotal}</div>
+      <div style="font-size:48px;font-weight:800;color:${barColor}">${all.total}</div>
       <div style="font-size:12px;color:var(--text2)">Ortalama Kalite Puanı (${qData.length} arama)</div>
     </div>`;
-    html+='<div style="display:grid;gap:8px">';
+    html+='<div style="display:grid;gap:6px">';
     for(let i=0;i<cats.length;i++){
-      const pct=avgs[i]*10;
+      const pct=all.cats[i]*10;
       const c=pct>=70?'#10b981':pct>=50?'#f59e0b':'#ef4444';
       html+=`<div style="display:flex;align-items:center;gap:8px;font-size:12px">
-        <span style="width:110px;color:var(--text2)">${catNames[i]}</span>
+        <span style="width:120px;color:var(--text2)">${catIcons[i]} ${catNames[i]}</span>
         <div style="flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden">
-          <div style="width:${pct}%;height:100%;background:${c};border-radius:4px"></div>
+          <div style="width:${pct}%;height:100%;background:${c};border-radius:4px;transition:width .5s"></div>
         </div>
-        <span style="width:30px;text-align:right;font-weight:600">${avgs[i]}</span>
+        <span style="width:30px;text-align:right;font-weight:600">${all.cats[i]}</span>
       </div>`;
     }
     html+='</div>';
     summaryEl.innerHTML=html;
   }
   
-  // A/B Test Results
+  // ===== PERFORMANCE TREND (Son 1 / 5 / 10) =====
+  if(qData.length>0&&trendEl){
+    const last1=calcAvgs(qData.slice(0,1));
+    const last5=calcAvgs(qData.slice(0,Math.min(5,qData.length)));
+    const last10=calcAvgs(qData.slice(0,Math.min(10,qData.length)));
+    const allAvg=calcAvgs(qData);
+    
+    const periods=[
+      {label:'Son Arama',data:last1,count:1},
+      {label:'Son 5',data:last5,count:Math.min(5,qData.length)},
+      {label:'Son 10',data:last10,count:Math.min(10,qData.length)},
+      {label:'Tümü',data:allAvg,count:qData.length}
+    ];
+    
+    let html='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">';
+    periods.forEach(p=>{
+      const c=p.data.total>=70?'#10b981':p.data.total>=50?'#f59e0b':'#ef4444';
+      html+=`<div style="text-align:center;padding:10px 4px;background:var(--surface);border:1px solid var(--border);border-radius:8px">
+        <div style="font-size:28px;font-weight:800;color:${c}">${p.data.total}</div>
+        <div style="font-size:11px;color:var(--text2)">${p.label}</div>
+        <div style="font-size:10px;color:var(--text2);opacity:.7">${p.count} arama</div>
+      </div>`;
+    });
+    html+='</div>';
+    
+    // Trend arrows per category
+    html+='<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">Kategori Trend (Son Arama vs Tümü)</div>';
+    html+='<div style="display:grid;gap:4px">';
+    for(let i=0;i<cats.length;i++){
+      const recent=last1.cats[i];
+      const overall=allAvg.cats[i];
+      const diff=Math.round((recent-overall)*10)/10;
+      const arrow=diff>0?'↑':diff<0?'↓':'→';
+      const arrowColor=diff>0?'#10b981':diff<0?'#ef4444':'#6b7280';
+      const bg=diff>0?'rgba(16,185,129,0.08)':diff<0?'rgba(239,68,68,0.08)':'transparent';
+      html+=`<div style="display:flex;align-items:center;gap:6px;font-size:12px;padding:4px 8px;border-radius:4px;background:${bg}">
+        <span style="width:120px;color:var(--text2)">${catIcons[i]} ${catNames[i]}</span>
+        <span style="font-weight:700;width:28px">${recent}</span>
+        <span style="color:${arrowColor};font-weight:700;font-size:14px">${arrow}</span>
+        <span style="color:var(--text2);font-size:11px">ort: ${overall}</span>
+        <span style="color:${arrowColor};font-weight:600;margin-left:auto">${diff>0?'+':''}${diff}</span>
+      </div>`;
+    }
+    html+='</div>';
+    trendEl.innerHTML=html;
+  }
+  
+  // ===== DEVELOPMENT ADVICE =====
+  if(qData.length>0&&adviceEl){
+    const allAvg=calcAvgs(qData);
+    const last3=calcAvgs(qData.slice(0,Math.min(3,qData.length)));
+    
+    // Find weakest and strongest categories
+    let catScores=cats.map((c,i)=>({name:catNames[i],icon:catIcons[i],score:allAvg.cats[i],recent:last3.cats[i],key:c}));
+    catScores.sort((a,b)=>a.score-b.score);
+    const weakest=catScores.slice(0,3);
+    const strongest=catScores.slice(-2);
+    
+    // Generate advice
+    const adviceMap={
+      'selamlama_puan':{tip:'Daha sıcak selamlama için ilan sahibinin adını erken kullan, "Merhaba [İsim] Bey/Hanım, rahatsız ettiğim için özür dilerim" gibi.',priority:'Orta'},
+      'ihtiyac_analizi_puan':{tip:'Müşterinin ihtiyaçlarını anlamak için "Neden satmayı düşünüyorsunuz?", "Ne zamandır satışta?" gibi açık uçlu sorular sor.',priority:'Yüksek'},
+      'ikna_becerisi_puan':{tip:'Değerleme hizmetinin ücretsiz olduğunu vurgula, piyasa bilgisi paylaş: "Bölgenizde son 3 ayda benzer daireler X TL\'ye satıldı"',priority:'Yüksek'},
+      'itiraz_yonetimi_puan':{tip:'"Sizi çok iyi anlıyorum" ile empati kur, sonra dolaylı yaklaş: "Sadece 15 dakikalık ücretsiz bir değerleme, sizi hiçbir şeye bağlamaz"',priority:'Kritik'},
+      'randevu_teklifi_puan':{tip:'İki seçenek sun: "Yarın saat 10 veya öğleden sonra 3, hangisi size daha uygun?" — seçenek verince red oranı düşer.',priority:'Yüksek'},
+      'kapanma_puan':{tip:'Görüşme sonunda mutlaka teşekkür et ve sonraki adımı netleştir: "Randevunuz [tarih], sizi arayıp hatırlatacağız"',priority:'Orta'},
+      'dogallik_puan':{tip:'Aynı cümleleri tekrarlama, müşterinin söylediklerini kendi kelimeleriyle özetle, "evet evet" yerine farklı onay kelimeleri kullan.',priority:'Orta'},
+      'profesyonellik_puan':{tip:'Firma adını ve kendi ismini net söyle, sektör terminolojisini doğru kullan, aşırı samimiyetten kaçın.',priority:'Düşük'}
+    };
+    
+    let html='';
+    
+    // Overall assessment
+    const overallScore=allAvg.total;
+    const emoji=overallScore>=80?'🏆':overallScore>=65?'👍':overallScore>=50?'⚠️':'🔴';
+    const verdict=overallScore>=80?'Mükemmel performans!':overallScore>=65?'İyi performans, geliştirilebilir':overallScore>=50?'Orta performans, iyileştirme gerekli':'Düşük performans, acil müdahale gerekli';
+    html+=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px">
+      <div style="font-size:14px;font-weight:700">${emoji} ${verdict}</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:4px">Genel puan: ${overallScore}/100 · ${qData.length} arama analiz edildi</div>
+    </div>`;
+    
+    // Weakest areas with advice
+    html+='<div style="font-size:12px;font-weight:700;color:#ef4444;margin-bottom:8px">🔻 Öncelikli Gelişim Alanları</div>';
+    weakest.forEach((w,idx)=>{
+      const advice=adviceMap[w.key]||{tip:'Genel iyileştirme yapılmalı',priority:'Orta'};
+      const trendArrow=w.recent>w.score?'<span style="color:#10b981">↑ iyileşiyor</span>':w.recent<w.score?'<span style="color:#ef4444">↓ düşüyor</span>':'<span style="color:#6b7280">→ stabil</span>';
+      const prioColor=advice.priority==='Kritik'?'#ef4444':advice.priority==='Yüksek'?'#f59e0b':'#6b7280';
+      html+=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-weight:700;font-size:12px">${w.icon} ${w.name}: <span style="color:#f59e0b">${w.score}/10</span></span>
+          <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(239,68,68,0.1);color:${prioColor};font-weight:600">${advice.priority}</span>
+        </div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Son 3 arama: ${w.recent} ${trendArrow}</div>
+        <div style="font-size:11px;color:var(--text);padding:6px 8px;background:rgba(59,130,246,0.06);border-radius:4px;border-left:3px solid var(--accent)">💡 ${advice.tip}</div>
+      </div>`;
+    });
+    
+    // Strongest areas
+    html+='<div style="font-size:12px;font-weight:700;color:#10b981;margin:12px 0 8px">✅ Güçlü Yönler</div>';
+    strongest.reverse().forEach(s=>{
+      html+=`<div style="display:flex;align-items:center;gap:6px;font-size:12px;padding:6px 8px;background:rgba(16,185,129,0.06);border-radius:6px;margin-bottom:4px">
+        <span>${s.icon}</span><span style="font-weight:600">${s.name}</span><span style="color:#10b981;font-weight:700;margin-left:auto">${s.score}/10</span>
+      </div>`;
+    });
+    
+    adviceEl.innerHTML=html;
+  }
+  
+  // ===== A/B TEST RESULTS =====
   const abData=allData.ab_tests||[];
   if(abData.length>0&&abEl){
     let html='';
@@ -1123,10 +1252,10 @@ function renderQuality(){
     abEl.innerHTML=html;
   }
   
-  // Quality Table
+  // ===== QUALITY TABLE =====
   if(qualityEl){
     if(qData.length===0){
-      qualityEl.innerHTML='<div class="empty">Henüz puanlanan arama yok<br><span style="font-size:11px">Kalite kontrol aktifleştirildiğinde aramalar otomatik puanlanacak</span></div>';
+      qualityEl.innerHTML='<div class="empty">Henüz puanlanan arama yok</div>';
       return;
     }
     let html='<table class="data-table"><thead><tr><th>İlan</th><th>Kişi</th><th>Puan</th><th>Sonuç</th><th>Güçlü Yönler</th><th>Gelişim Alanları</th><th>Tarih</th></tr></thead><tbody>';
