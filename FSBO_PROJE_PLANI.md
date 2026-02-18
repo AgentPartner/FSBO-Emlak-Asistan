@@ -147,6 +147,23 @@ Sahibinden.com'dan ilan detaylarını çekip DB'ye kaydediyor.
 
 ---
 
+## 🔐 API ANAHTARLARI & KİMLİK BİLGİLERİ
+
+| Servis | Bilgi |
+|--------|-------|
+| **Vapi API Key** | `76f2f9fb-9632-4c62-8ccb-f9abcd609f67` |
+| **Vapi Assistant ID** | `10c4e584-0200-4a57-9262-b42bf75faf1c` |
+| **Vapi Phone Number ID** | `5f8b10b1-eda9-4036-b625-e50fdb23cffc` |
+| **ElevenLabs API Key** | `sk_98ee0d111f7b1bb7bb4c4f5a5aa29239b1ad08b1f8ddec89` |
+| **Netgsm SIP** | User: `8503033860` / Pass: `u8JWKKcYD9Y3` / Server: `sip.netgsm.com.tr:5060` |
+| **n8n Vapi Credential** | ID: `g8lOTMaAD5DD4k8a` (Header Auth) |
+| **n8n Postgres Credential** | ID: `nmP7dbHwgdJq9OTf` |
+| **GitHub Token** | `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` |
+| **SSH** | Key: `C:\Users\mimar\.ssh\id_rsa` → `root@46.224.146.57` |
+| **DB Şifre** | `mFZXLdJFCidGswkUsahtzh5fXTMXy8Rr1sd8woL17it7lQxafZRCa4g869GA7lx6` |
+
+---
+
 ## 🛠️ HIZLI KOMUTLAR
 
 ### Veritabanı Sorgusu

@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexus Realty - FSBO Dashboard</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%233b82f6'/%3E%3Cstop offset='100%25' stop-color='%2306b6d4'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Cpath d='M9 13.5c1.5 3 3.5 5 6.5 6.5l2-2c.3-.3.7-.3 1 0l3 2c.3.3.3.7 0 1l-2 2c-.2.2-.5.3-.7.2C12 20.5 8.5 12 11.8 8.7l2-2c.3-.3.7-.3 1 0l2 3c.3.3.3.7 0 1l-2 2c-.2.2-.3.5-.2.7z' fill='white' stroke='white' stroke-width='0.5'/%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0e17;--surface:#111827;--surface2:#1a2235;--border:#1e293b;--text:#e2e8f0;--text2:#94a3b8;--accent:#3b82f6;--green:#10b981;--orange:#f59e0b;--red:#ef4444;--purple:#8b5cf6;--cyan:#06b6d4;--pink:#ec4899}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.header{background:linear-gradient(135deg,var(--surface),var(--surface2));border-bottom:1px solid var(--border);padding:16px 32px;display:flex;align-items:center;justify-content:space-between}
+.header-left{display:flex;align-items:center;gap:16px}
+.logo{width:40px;height:40px;background:linear-gradient(135deg,var(--accent),var(--cyan));border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:white}
+.header h1{font-size:20px;font-weight:700}.header h1 span{color:var(--accent)}
+.header-right{display:flex;align-items:center;gap:12px}
+.refresh-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text2);padding:8px 16px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;display:flex;align-items:center;gap:6px;transition:all .2s}
+.refresh-btn:hover{border-color:var(--accent);color:var(--accent)}
+.refresh-btn.loading svg{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.last-update{font-size:12px;color:var(--text2)}
+.nav{display:flex;gap:4px;padding:12px 32px;background:var(--surface);border-bottom:1px solid var(--border)}
+.nav-btn{background:none;border:none;color:var(--text2);padding:10px 20px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:500;transition:all .2s}
+.nav-btn:hover{background:var(--surface2);color:var(--text)}.nav-btn.active{background:var(--accent);color:white}
+.main{padding:24px 32px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;transition:all .3s;position:relative;overflow:hidden}
+.card:hover{transform:translateY(-2px);border-color:var(--accent)}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.card.blue::before{background:var(--accent)}.card.green::before{background:var(--green)}.card.orange::before{background:var(--orange)}.card.red::before{background:var(--red)}.card.purple::before{background:var(--purple)}.card.cyan::before{background:var(--cyan)}.card.pink::before{background:var(--pink)}
+.card-label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.card-value{font-size:28px;font-weight:800;margin-top:6px}
+.card.blue .card-value{color:var(--accent)}.card.green .card-value{color:var(--green)}.card.orange .card-value{color:var(--orange)}.card.red .card-value{color:var(--red)}.card.purple .card-value{color:var(--purple)}.card.cyan .card-value{color:var(--cyan)}.card.pink .card-value{color:var(--pink)}
+.table-container{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.table-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.table-header h2{font-size:16px;font-weight:700}
+.table-header h2 a:hover{color:var(--accent)!important;text-decoration:none}
+.table-search{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 14px;border-radius:8px;font-family:inherit;font-size:13px;width:220px}
+.table-search::placeholder{color:var(--text2)}
+table{width:100%;border-collapse:collapse}
+thead th{text-align:left;padding:12px 14px;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);font-weight:600;border-bottom:1px solid var(--border);background:var(--surface2)}
+tbody td{padding:10px 14px;font-size:13px;border-bottom:1px solid var(--border)}
+tbody tr{transition:background .15s;cursor:pointer}tbody tr:hover{background:var(--surface2)}tbody tr:last-child td{border-bottom:none}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600}
+.badge::before{content:'';width:6px;height:6px;border-radius:50%}
+.badge-yeni{background:rgba(59,130,246,.15);color:var(--accent)}.badge-yeni::before{background:var(--accent)}
+.badge-aktarildi{background:rgba(6,182,212,.15);color:var(--cyan)}.badge-aktarildi::before{background:var(--cyan)}
+.badge-aranacak{background:rgba(245,158,11,.15);color:var(--orange)}.badge-aranacak::before{background:var(--orange)}
+.badge-araniyor{background:rgba(245,158,11,.15);color:var(--orange)}.badge-araniyor::before{background:var(--orange)}
+.badge-arandi,.badge-arama_yapildi{background:rgba(139,92,246,.15);color:var(--purple)}.badge-arandi::before,.badge-arama_yapildi::before{background:var(--purple)}
+.badge-randevu{background:rgba(16,185,129,.15);color:var(--green)}.badge-randevu::before{background:var(--green)}
+.badge-ilgilenmiyor{background:rgba(239,68,68,.15);color:var(--red)}.badge-ilgilenmiyor::before{background:var(--red)}
+.badge-aranmayacak{background:rgba(148,163,184,.15);color:var(--text2)}.badge-aranmayacak::before{background:var(--text2)}
+.badge-tekrar_aranacak{background:rgba(251,146,60,.15);color:#fb923c}.badge-tekrar_aranacak::before{background:#fb923c}
+/* WhatsApp badges */
+.wa-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600}
+.wa-badge.bekliyor{background:rgba(148,163,184,.12);color:var(--text2)}
+.wa-badge.gonderildi{background:rgba(37,211,102,.12);color:#25d366}
+.wa-badge.iletildi{background:rgba(37,211,102,.2);color:#25d366}
+.wa-badge.okundu{background:rgba(59,130,246,.15);color:var(--accent)}
+.wa-badge.hata{background:rgba(239,68,68,.12);color:var(--red)}
+.lead-tab{background:none;border:none;color:var(--text2);padding:12px 20px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;border-bottom:2px solid transparent;transition:all .2s}
+.lead-tab:hover{color:var(--text)}.lead-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.badge-satilik{background:rgba(16,185,129,.12);color:var(--green);font-size:11px;padding:2px 8px}
+.badge-kiralik{background:rgba(245,158,11,.12);color:var(--orange);font-size:11px;padding:2px 8px}
+.action-btn{background:var(--accent);border:none;color:white;padding:6px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;transition:all .2s}
+.action-btn:hover{opacity:.85;transform:scale(1.02)}.action-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.section{display:none}.section.active{display:block}
+.empty{text-align:center;padding:60px 20px;color:var(--text2)}.empty-icon{font-size:48px;margin-bottom:12px;opacity:.3}
+.fiyat{font-weight:700;color:var(--green)}.phone-link{color:var(--cyan);text-decoration:none}.phone-link:hover{text-decoration:underline}
+.loading-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:100;transition:opacity .5s}
+.loading-overlay.hidden{opacity:0;pointer-events:none}
+.loader{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+
+/* DETAIL PANEL */
+.detail-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:150;display:none}
+.detail-overlay.open{display:block}
+.detail-panel{position:fixed;top:0;right:-500px;width:480px;max-width:95vw;height:100vh;background:var(--surface);border-left:1px solid var(--border);z-index:151;transition:right .3s ease;overflow-y:auto}
+.detail-panel.open{right:0}
+.detail-head{padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:1}
+.detail-head h2{font-size:16px;font-weight:700}
+.detail-close{background:none;border:none;color:var(--text2);font-size:22px;cursor:pointer;padding:4px 8px}
+.detail-body{padding:20px}
+.detail-section{font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin:20px 0 10px;padding-bottom:5px;border-bottom:1px solid var(--border)}
+.detail-section:first-child{margin-top:0}
+.detail-row{display:flex;padding:6px 0;gap:8px}
+.detail-label{font-size:12px;color:var(--text2);min-width:120px;flex-shrink:0}
+.detail-value{font-size:13px;font-weight:500;word-break:break-word}
+.detail-value.big{font-size:20px;font-weight:800;color:var(--green)}
+.detail-badges{display:flex;gap:8px;margin:12px 0}
+.detail-url{color:var(--accent);text-decoration:none;word-break:break-all;font-size:12px}
+.detail-url:hover{text-decoration:underline}
+.status-select{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;width:100%}
+.status-select:focus{outline:none;border-color:var(--accent)}
+.status-select option{background:var(--surface);color:var(--text)}
+
+/* MODAL */
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);display:none;align-items:flex-start;justify-content:center;z-index:200;padding-top:30px;overflow-y:auto}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:680px;max-width:95vw;animation:modalIn .2s ease;margin-bottom:40px}
+@keyframes modalIn{from{opacity:0;transform:scale(.95)}}
+.modal-head{padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-head h2{font-size:18px;font-weight:700}
+.modal-close{background:none;border:none;color:var(--text2);font-size:24px;cursor:pointer}
+.modal-body{padding:18px 24px}
+.modal-foot{padding:14px 24px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+.form-row{display:flex;gap:12px}
+.form-group{flex:1;margin-bottom:12px}
+.form-group label{display:block;font-size:11px;color:var(--text2);margin-bottom:3px;font-weight:600}
+.form-group input,.form-group select,.form-group textarea{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-family:inherit;font-size:13px}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--accent)}
+.form-group textarea{resize:vertical}
+.form-section{font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin:14px 0 6px;padding-bottom:5px;border-bottom:1px solid var(--border)}
+.form-note{font-size:11px;color:var(--text2);margin-top:3px}
+.hidden{display:none !important}
+.toggle-row{display:flex;gap:8px;margin-bottom:12px}
+.toggle-btn{flex:1;padding:9px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text2);cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;text-align:center;transition:all .2s}
+.toggle-btn:hover{border-color:var(--text2)}
+.toggle-btn.active-green{border-color:var(--green);color:var(--green);background:rgba(16,185,129,.1)}
+.toggle-btn.active-orange{border-color:var(--orange);color:var(--orange);background:rgba(245,158,11,.1)}
+/* CALL DETAIL */
+.call-row{cursor:pointer;transition:background .15s}.call-row:hover{background:var(--surface2)}
+.call-expand{display:none;background:var(--surface2);border-bottom:1px solid var(--border)}
+.call-expand.open{display:table-row}
+.call-expand.audio-playing{display:table-row;height:0;overflow:hidden;opacity:0;pointer-events:none}
+.call-expand td{padding:16px 20px}
+.call-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.call-info-block{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px}
+.call-info-title{font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:8px}
+.call-stat{display:flex;justify-content:space-between;padding:4px 0;font-size:13px}
+.call-stat-label{color:var(--text2)}.call-stat-value{font-weight:600}
+.transcript-box{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:12px;max-height:250px;overflow-y:auto;font-size:13px;line-height:1.7;color:var(--text2);white-space:pre-wrap;word-break:break-word}
+.transcript-box::-webkit-scrollbar{width:6px}.transcript-box::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.audio-player{margin-top:12px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.audio-controls{display:flex;align-items:center;gap:12px}
+.play-btn{background:var(--accent);border:none;color:white;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;transition:all .2s}
+.play-btn:hover{background:var(--cyan);transform:scale(1.08)}
+.audio-timeline{flex:1;display:flex;flex-direction:column;gap:4px}
+.audio-seekbar{position:relative;height:8px;background:var(--surface2);border-radius:4px;cursor:pointer;overflow:hidden}
+.audio-seekbar:hover{height:10px}
+.audio-buffered{position:absolute;top:0;left:0;height:100%;background:rgba(255,255,255,.08);border-radius:4px;pointer-events:none}
+.audio-progress{position:absolute;top:0;left:0;height:100%;background:linear-gradient(90deg,var(--accent),var(--cyan));border-radius:4px;pointer-events:none;transition:width .1s linear}
+.audio-seekbar:hover .audio-progress{background:linear-gradient(90deg,var(--cyan),var(--green))}
+.audio-times{display:flex;justify-content:space-between;font-size:11px;color:var(--text2);font-variant-numeric:tabular-nums}
+.audio-speed{background:var(--surface2);border:1px solid var(--border);color:var(--text2);padding:2px 6px;border-radius:4px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:600;min-width:36px;text-align:center}
+.badge-randevu_alindi{background:rgba(16,185,129,.15);color:var(--green)}.badge-randevu_alindi::before{background:var(--green)}
+.badge-tekrar_ara{background:rgba(245,158,11,.15);color:var(--orange)}.badge-tekrar_ara::before{background:var(--orange)}
+.badge-tamamlandi,.badge-gorusme_tamamlandi{background:rgba(139,92,246,.15);color:var(--purple)}.badge-tamamlandi::before,.badge-gorusme_tamamlandi::before{background:var(--purple)}
+.badge-kisa_arama{background:rgba(148,163,184,.15);color:var(--text2)}.badge-kisa_arama::before{background:var(--text2)}
+.call-search{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 14px;border-radius:8px;font-family:inherit;font-size:13px;width:220px}
+.call-search::placeholder{color:var(--text2)}
+/* REPORT SECTION */
+.report-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.report-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden}
+.report-block h3{font-size:14px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.report-block h3 span{font-size:11px;color:var(--text2);font-weight:500}
+.report-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.report-stat{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
+.report-stat-label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.3px;font-weight:600}
+.report-stat-value{font-size:24px;font-weight:800;margin-top:4px}
+.report-stat-sub{font-size:11px;color:var(--text2);margin-top:2px}
+.report-stat.accent .report-stat-value{color:var(--accent)}
+.report-stat.green .report-stat-value{color:var(--green)}
+.report-stat.orange .report-stat-value{color:var(--orange)}
+.report-stat.red .report-stat-value{color:var(--red)}
+.report-stat.cyan .report-stat-value{color:var(--cyan)}
+.report-stat.purple .report-stat-value{color:var(--purple)}
+.report-stat.pink .report-stat-value{color:var(--pink)}
+/* BAR CHART */
+.chart-container{height:180px;display:flex;align-items:flex-end;gap:6px;padding:12px 0 0}
+.chart-bar-group{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.chart-bar{width:100%;border-radius:4px 4px 0 0;min-height:2px;transition:height .5s ease;position:relative}
+.chart-bar:hover{opacity:.85}
+.chart-bar.arama{background:var(--accent)}
+.chart-bar.randevu{background:var(--green)}
+.chart-bar-label{font-size:9px;color:var(--text2);white-space:nowrap}
+.chart-bar-value{font-size:9px;color:var(--text);font-weight:600;text-align:center}
+.chart-legend{display:flex;gap:16px;justify-content:center;margin-top:12px}
+.chart-legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2)}
+.chart-legend-dot{width:8px;height:8px;border-radius:2px}
+/* PIE CHART */
+.pie-container{display:flex;align-items:center;justify-content:center;gap:24px;padding:12px 0}
+.pie-chart{width:140px;height:140px;border-radius:50%;position:relative}
+.pie-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:70px;height:70px;background:var(--surface);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column}
+.pie-center-value{font-size:20px;font-weight:800;color:var(--text)}
+.pie-center-label{font-size:9px;color:var(--text2)}
+.pie-legend{display:flex;flex-direction:column;gap:8px}
+.pie-legend-item{display:flex;align-items:center;gap:8px;font-size:12px}
+.pie-legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.pie-legend-label{color:var(--text2)}
+.pie-legend-value{font-weight:700;margin-left:auto;min-width:24px;text-align:right}
+/* PERIOD TABS */
+.period-tabs{display:flex;gap:4px;margin-bottom:16px}
+.period-tab{background:var(--surface2);border:1px solid var(--border);color:var(--text2);padding:6px 14px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;transition:all .2s}
+.period-tab:hover{border-color:var(--text2);color:var(--text)}
+.period-tab.active{background:var(--accent);border-color:var(--accent);color:white}
+.report-empty{text-align:center;padding:40px;color:var(--text2);font-size:13px;opacity:.6}
+@media(max-width:768px){.header,.nav,.main{padding-left:16px;padding-right:16px}.cards{grid-template-columns:repeat(2,1fr)}.form-row{flex-direction:column;gap:0}.detail-panel{width:100%}.call-detail-grid{grid-template-columns:1fr}.report-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="loading-overlay" id="loading"><div class="loader"></div></div>
+<div class="header">
+  <div class="header-left"><div class="logo">N</div><h1>Nexus <span>Realty</span> — FSBO Dashboard</h1></div>
+  <div class="header-right">
+    <div class="status-dot"></div>
+    <span class="last-update" id="lastUpdate">Yükleniyor...</span>
+    <button class="refresh-btn" onclick="loadData();loadCredits()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>Yenile</button>
+  </div>
+</div>
+<div class="nav">
+  <button class="nav-btn active" onclick="showSection('overview',this)">📊 Genel Bakış</button>
+  <button class="nav-btn" onclick="showSection('leads',this)">📋 İlanlar</button>
+  <button class="nav-btn" onclick="showSection('calls',this)">📞 Aramalar</button>
+  <button class="nav-btn" onclick="showSection('appointments',this)">📅 Randevular</button>
+  <button class="nav-btn" onclick="showSection('credits',this)">💰 Krediler</button>
+</div>
+<div class="main">
+  <div id="geriAramaUyari" style="display:none;margin-bottom:8px"></div>
+  <div class="section active" id="sec-overview">
+    <div class="cards" id="summaryCards"></div>
+    <div class="report-grid">
+      <div class="report-block">
+        <h3>📊 Performans Özeti</h3>
+        <div class="period-tabs">
+          <button class="period-tab active" onclick="setPeriod('bugun',this)">Bugün</button>
+          <button class="period-tab" onclick="setPeriod('hafta',this)">Bu Hafta</button>
+          <button class="period-tab" onclick="setPeriod('toplam',this)">Tümü</button>
+        </div>
+        <div class="report-stats" id="reportStats"></div>
+      </div>
+      <div class="report-block">
+        <h3>📈 Son 14 Gün <span>Günlük Arama Trendi</span></h3>
+        <div id="trendChart"></div>
+      </div>
+      <div class="report-block">
+        <h3>🎯 Sonuç Dağılımı</h3>
+        <div id="pieChart"></div>
+      </div>
+      <div class="report-block">
+        <h3>💰 Maliyet Analizi</h3>
+        <div class="report-stats" id="costStats"></div>
+      </div>
+    </div>
+    <div class="table-container">
+      <div class="table-header"><h2>📋 Son İlanlar</h2><button class="action-btn" onclick="openModal()">+ Yeni İlan</button></div>
+      <div style="overflow-x:auto"><table><thead><tr><th>İlan ID</th><th>Başlık</th><th>İşlem</th><th>Tip</th><th>Fiyat</th><th>İl / İlçe</th><th>İlan Sahibi</th><th>İlan Tarihi</th><th>Kayıt</th><th>Durum</th><th>📱 WA</th></tr></thead><tbody id="overviewLeads"></tbody></table></div>
+    </div>
+  </div>
+  <div class="section" id="sec-leads">
+    <div class="table-container">
+      <div class="table-header"><h2>📋 Tüm İlanlar</h2><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><div id="bulkBar" style="display:none;background:var(--red);padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;white-space:nowrap" onclick="bulkDelete()">🗑️ <span id="bulkCount">0</span> ilan sil</div><select id="leadDurum" onchange="filterLeads()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:8px;font-size:12px"></select><select id="leadKategori" onchange="filterLeads()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:8px;font-size:12px"><option value="">Tüm Kategoriler</option></select><select id="leadIslem" onchange="filterLeads()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:8px;font-size:12px"><option value="">Tüm İşlemler</option><option value="satilik">Satılık</option><option value="kiralik">Kiralık</option></select><input type="text" class="table-search" placeholder="İlan ara..." id="leadSearch" oninput="filterLeads()"><button class="action-btn" style="background:var(--orange);color:#000;font-weight:700" onclick="openBatchCallModal()">📞 Toplu Arama</button><button class="action-btn" onclick="openModal()">+ Yeni İlan</button></div></div>
+      <div style="display:flex;gap:0;padding:0 20px;border-bottom:1px solid var(--border)"><button class="lead-tab active" id="tabAktif" onclick="switchLeadTab('aktif')">✅ Aktif <span id="tabAktifCount" style="background:var(--accent);color:#fff;padding:1px 8px;border-radius:10px;font-size:11px;margin-left:4px">0</span></button><button class="lead-tab" id="tabPasif" onclick="switchLeadTab('pasif')">⛔ Pasif <span id="tabPasifCount" style="background:var(--text2);color:#fff;padding:1px 8px;border-radius:10px;font-size:11px;margin-left:4px">0</span></button></div>
+      <div id="batchProgress" style="display:none;padding:12px 20px;background:linear-gradient(135deg,rgba(245,158,11,.1),rgba(59,130,246,.1));border-bottom:1px solid var(--border)"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span id="batchStatusText" style="font-size:13px;font-weight:600">📞 Toplu arama devam ediyor...</span><button onclick="cancelBatchCall()" style="background:var(--red);color:#fff;border:none;padding:4px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">⏹ Durdur</button></div><div style="background:var(--surface2);border-radius:8px;height:8px;overflow:hidden"><div id="batchProgressBar" style="height:100%;background:linear-gradient(90deg,var(--orange),var(--green));border-radius:8px;transition:width .5s ease;width:0%"></div></div><div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--text2)"><span id="batchDetail">0/0 arandı</span><span id="batchEta">Tahmini süre: -</span></div></div>
+      <div style="overflow-x:auto"><table><thead><tr><th style="width:32px"><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)"></th><th>İlan ID</th><th>Başlık</th><th>İşlem</th><th>Tip</th><th>Fiyat</th><th>İl / İlçe</th><th>Telefon</th><th>İlan Sahibi</th><th>İlan Tarihi</th><th>Kayıt</th><th>Durum</th><th>📱 WA</th></tr></thead><tbody id="leadsTable"></tbody></table></div>
+    </div>
+  </div>
+  <div class="section" id="sec-calls"><div class="table-container"><div class="table-header"><h2>📞 Arama Geçmişi</h2><input type="text" class="call-search" placeholder="Arama ara..." id="callSearch" oninput="filterCalls()"></div><div id="callsContent"></div></div></div>
+  <div class="section" id="sec-appointments"><div class="table-container"><div class="table-header"><h2>📅 Randevular</h2></div><div id="appointmentsContent"></div></div></div>
+  <div class="section" id="sec-credits">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px">
+      <div class="table-container">
+        <div class="table-header"><h2><a href="https://elevenlabs.io/app/subscription" target="_blank" style="color:inherit;text-decoration:none">🔊 ElevenLabs ↗</a></h2></div>
+        <div id="elevenContent" style="padding:16px"><div class="empty">Yükleniyor...</div></div>
+      </div>
+      <div class="table-container">
+        <div class="table-header"><h2><a href="https://dashboard.vapi.ai" target="_blank" style="color:inherit;text-decoration:none">📞 Vapi.ai ↗</a></h2></div>
+        <div id="vapiContent" style="padding:16px"><div class="empty">Yükleniyor...</div></div>
+      </div>
+      <div class="table-container">
+        <div class="table-header"><h2><a href="https://portal.netgsm.com.tr/webportal/" target="_blank" style="color:inherit;text-decoration:none">📱 Netgsm ↗</a></h2></div>
+        <div id="netgsmContent" style="padding:16px"><div class="empty">Yükleniyor...</div></div>
+      </div>
+    </div>
+    <div class="table-container">
+      <div class="table-header"><h2>📊 Aylık Maliyet Özeti</h2></div>
+      <div id="costSummary" style="padding:16px"><div class="empty">Yükleniyor...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL PANEL -->
+<div class="detail-overlay" id="detailOverlay" onclick="closeDetail()"></div>
+<div class="detail-panel" id="detailPanel">
+  <div class="detail-head"><h2 id="detailTitle">İlan Detayı</h2><div style="display:flex;gap:8px;align-items:center"><button class="action-btn" id="callLeadBtn" onclick="callLead()" style="background:var(--green)">📞 Ara</button><button class="action-btn" id="editLeadBtn" onclick="editCurrentLead()" style="background:var(--orange)">✏️ Düzenle</button><button class="action-btn" onclick="deleteCurrentLead()" style="background:var(--red)">🗑️ Sil</button><button class="detail-close" onclick="closeDetail()">&times;</button></div></div>
+  <div class="detail-body" id="detailBody"></div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+<div class="modal">
+  <div class="modal-head"><h2 id="modalTitle">➕ Yeni İlan Ekle</h2><button class="modal-close" onclick="closeModal()">&times;</button></div>
+  <div class="modal-body">
+    <div class="form-group"><label>Sahibinden URL (opsiyonel)</label><input type="text" id="f_url" placeholder="https://www.sahibinden.com/ilan/..."></div>
+    <div class="form-section">📌 Temel Bilgiler</div>
+    <div class="form-row">
+      <div class="form-group"><label>İlan ID (otomatik)</label><input type="text" id="f_ilan_id" style="color:var(--cyan)"></div>
+      <div class="form-group"><label>İlan Sahibi *</label><input type="text" id="f_sahip" placeholder="Ad Soyad"></div>
+      <div class="form-group"><label>Telefon *</label><input type="text" id="f_tel" placeholder="05XX XXX XX XX"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>İlan Tarihi</label><input type="date" id="f_ilan_tarihi"></div>
+      <div class="form-group" style="flex:2"><label> </label></div>
+    </div>
+    <div class="form-section">🏠 Kategori ve İşlem</div>
+    <label style="font-size:11px;color:var(--text2);font-weight:600;display:block;margin-bottom:3px">İşlem Türü *</label>
+    <div class="toggle-row" id="islemToggle">
+      <button class="toggle-btn active-green" onclick="setIslem('satilik',this)">🏷️ Satılık</button>
+      <button class="toggle-btn" onclick="setIslem('kiralik',this)">🔑 Kiralık</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Kategori *</label>
+        <select id="f_kategori" onchange="onKategoriChange()">
+          <optgroup label="Konut"><option value="Daire">Daire</option><option value="Residence">Residence</option><option value="Müstakil Ev">Müstakil Ev</option><option value="Villa">Villa</option><option value="Çiftlik Evi">Çiftlik Evi</option><option value="Köşk / Konak">Köşk / Konak</option><option value="Yalı">Yalı</option><option value="Yalı Dairesi">Yalı Dairesi</option><option value="Yazlık">Yazlık</option><option value="Prefabrik">Prefabrik Ev</option><option value="Kooperatif">Kooperatif</option></optgroup>
+          <optgroup label="İş Yeri"><option value="Dükkan / Mağaza">Dükkan / Mağaza</option><option value="Ofis">Ofis</option><option value="Büfe">Büfe</option><option value="Fabrika">Fabrika</option><option value="Atölye / İmalathane">Atölye / İmalathane</option><option value="Depo / Antrepo">Depo / Antrepo</option><option value="Komple Bina">Komple Bina</option><option value="Apart Otel">Apart Otel</option></optgroup>
+          <optgroup label="Arazi"><option value="Arsa">Arsa</option><option value="Tarla">Tarla</option><option value="Bağ / Bahçe">Bağ / Bahçe</option><option value="Çiftlik">Çiftlik</option></optgroup>
+        </select>
+      </div>
+      <div class="form-group"><label id="fiyatLabel">Fiyat (₺) *</label><input type="number" id="f_fiyat" placeholder="2500000"></div>
+    </div>
+    <div class="form-section">📝 İlan Bilgileri</div>
+    <div class="form-group"><label>İlan Başlığı *</label><input type="text" id="f_baslik" placeholder="Kayseri Melikgazi 3+1 Satılık Daire"></div>
+    <div class="form-group"><label>Açıklama</label><textarea id="f_aciklama" rows="4" placeholder="Detaylı ilan açıklaması..." style="font-size:13px;color:var(--text)"></textarea></div>
+    <!-- KONUT -->
+    <div id="konutFields">
+      <div class="form-section">🏢 Konut Özellikleri</div>
+      <div class="form-row">
+        <div class="form-group"><label>m² (Brüt)</label><input type="number" id="f_m2_brut" placeholder="130"></div>
+        <div class="form-group"><label>m² (Net)</label><input type="number" id="f_m2_net" placeholder="120"></div>
+        <div class="form-group"><label>Oda Sayısı</label><select id="f_oda"><option value="">Seçiniz</option><option>1+0</option><option>1+1</option><option>1.5+1</option><option>2+0</option><option>2+1</option><option>2+2</option><option>2.5+1</option><option>3+1</option><option>3+2</option><option>3.5+1</option><option>4+1</option><option>4+2</option><option>4.5+1</option><option>5+1</option><option>5+2</option><option>6+</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Bina Yaşı</label><select id="f_bina_yasi"><option value="">Seçiniz</option><option>0 (Sıfır)</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5-10</option><option>11-15</option><option>16-20</option><option>21-25</option><option>26-30</option><option>31+</option></select></div>
+        <div class="form-group"><label>Bulunduğu Kat</label><select id="f_kat"><option value="">Seçiniz</option><option>Bodrum</option><option>Zemin Kat</option><option>Giriş Katı</option><option>Yüksek Giriş</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11-15</option><option>16-20</option><option>21-25</option><option>26-30</option><option>30+</option><option>Çatı Katı</option></select></div>
+        <div class="form-group"><label>Kat Sayısı</label><input type="number" id="f_kat_sayisi" placeholder="10"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Isıtma</label><select id="f_isitma"><option value="">Seçiniz</option><option>Doğalgaz (Kombi)</option><option>Merkezi (Pay Ölçer)</option><option>Merkezi</option><option>Yerden Isıtma</option><option>Klima</option><option>Soba</option><option>Yok</option></select></div>
+        <div class="form-group"><label>Banyo Sayısı</label><select id="f_banyo"><option value="">Seçiniz</option><option>1</option><option>2</option><option>3</option><option>4+</option></select></div>
+        <div class="form-group"><label>Kullanım Durumu</label><select id="f_kullanim"><option value="">Seçiniz</option><option>Boş</option><option>Kiracılı</option><option>Mal Sahibi</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Eşyalı</label><select id="f_esyali"><option value="">Seçiniz</option><option>Evet</option><option>Hayır</option></select></div>
+        <div class="form-group"><label>Site İçinde</label><select id="f_site"><option value="">Seçiniz</option><option>Evet</option><option>Hayır</option></select></div>
+        <div class="form-group"><label>Cephe</label><select id="f_cephe"><option value="">Seçiniz</option><option>Kuzey</option><option>Güney</option><option>Doğu</option><option>Batı</option><option>Güney-Doğu</option><option>Güney-Batı</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Takas</label><select id="f_takas"><option value="">Seçiniz</option><option>Evet</option><option>Hayır</option></select></div>
+        <div class="form-group"><label>Krediye Uygun</label><select id="f_kredi"><option value="">Seçiniz</option><option>Evet</option><option>Hayır</option></select></div>
+        <div class="form-group"><label>Balkon</label><select id="f_balkon"><option value="">Seçiniz</option><option>Yok</option><option>1</option><option>2</option><option>3+</option></select></div>
+      </div>
+    </div>
+    <!-- ARAZİ -->
+    <div id="araziFields" class="hidden">
+      <div class="form-section">📐 Arazi Özellikleri</div>
+      <div class="form-row">
+        <div class="form-group"><label>m² *</label><input type="number" id="f_arazi_m2" placeholder="500"></div>
+        <div class="form-group"><label>Ada No</label><input type="text" id="f_ada" placeholder="1234"></div>
+        <div class="form-group"><label>Parsel No</label><input type="text" id="f_parsel" placeholder="56"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>İmar Durumu</label><select id="f_imar"><option value="">Seçiniz</option><option>Konut İmarlı</option><option>Ticari İmarlı</option><option>Sanayi İmarlı</option><option>Konut+Ticari İmarlı</option><option>Tarla (İmarsız)</option><option>Turizm İmarlı</option><option>Arazi (İmarsız)</option></select></div>
+        <div class="form-group"><label>Tapu Durumu</label><select id="f_tapu"><option value="">Seçiniz</option><option>Kat Mülkiyetli</option><option>Hisseli Tapulu</option><option>Müstakil Tapulu</option><option>Tahsis Tapulu</option></select></div>
+        <div class="form-group"><label>Gabari</label><input type="text" id="f_gabari" placeholder="5 kat"></div>
+      </div>
+    </div>
+    <!-- İŞYERİ -->
+    <div id="isyeriFields" class="hidden">
+      <div class="form-section">🏪 İşyeri Özellikleri</div>
+      <div class="form-row">
+        <div class="form-group"><label>m² (Brüt)</label><input type="number" id="f_isyeri_m2" placeholder="150"></div>
+        <div class="form-group"><label>Bina Yaşı</label><select id="f_isyeri_yasi"><option value="">Seçiniz</option><option>0 (Sıfır)</option><option>1-5</option><option>6-10</option><option>11-15</option><option>16-20</option><option>21+</option></select></div>
+        <div class="form-group"><label>Kat Sayısı</label><input type="number" id="f_isyeri_kat" placeholder="1"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Isıtma</label><select id="f_isyeri_isitma"><option value="">Seçiniz</option><option>Doğalgaz</option><option>Merkezi</option><option>Klima</option><option>Soba</option><option>Yok</option></select></div>
+        <div class="form-group"><label>Kullanım Durumu</label><select id="f_isyeri_kullanim"><option value="">Seçiniz</option><option>Boş</option><option>Kiracılı</option><option>Mal Sahibi</option></select></div>
+        <div class="form-group"><label>Krediye Uygun</label><select id="f_isyeri_kredi"><option value="">Seçiniz</option><option>Evet</option><option>Hayır</option></select></div>
+      </div>
+    </div>
+    <div class="form-section">📍 Konum</div>
+    <div class="form-row">
+      <div class="form-group"><label>İl</label><input type="text" id="f_il" placeholder="Kayseri"></div>
+      <div class="form-group"><label>İlçe *</label><input type="text" id="f_ilce" placeholder="Melikgazi"></div>
+      <div class="form-group"><label>Mahalle</label><input type="text" id="f_mahalle" placeholder="Mimarsinan"></div>
+    </div>
+  </div>
+  <div class="modal-foot">
+    <button class="action-btn" style="background:var(--surface2);color:var(--text2)" onclick="closeModal()">İptal</button>
+    <button class="action-btn" id="submitBtn" onclick="submitLead()">💾 Kaydet</button>
+  </div>
+</div>
+</div>
+
+<script>
+const API='https://n8n.agentpartner.pro/webhook/fsbo-dashboard';
+const ADD_API='https://n8n.agentpartner.pro/webhook/fsbo-add-lead';
+const DELETE_API='https://n8n.agentpartner.pro/webhook/fsbo-delete-lead';
+const STATUS_API='https://n8n.agentpartner.pro/webhook/fsbo-update-status';
+const CALL_API='https://n8n.agentpartner.pro/webhook/fsbo-manuel-arama';
+let allData=null,islemTuru='satilik',editMode=false,currentDetailLead=null,currentPeriod='bugun';
+
+const konutTypes=['Daire','Residence','Müstakil Ev','Villa','Çiftlik Evi','Köşk / Konak','Yalı','Yalı Dairesi','Yazlık','Prefabrik','Kooperatif'];
+const araziTypes=['Arsa','Tarla','Bağ / Bahçe','Çiftlik'];
+const isyeriTypes=['Dükkan / Mağaza','Ofis','Büfe','Fabrika','Atölye / İmalathane','Depo / Antrepo','Komple Bina','Apart Otel'];
+
+function onKategoriChange(){const v=document.getElementById('f_kategori').value;document.getElementById('konutFields').classList.toggle('hidden',!konutTypes.includes(v));document.getElementById('araziFields').classList.toggle('hidden',!araziTypes.includes(v));document.getElementById('isyeriFields').classList.toggle('hidden',!isyeriTypes.includes(v));}
+function formatPrice(p){if(!p)return'-';return new Intl.NumberFormat('tr-TR').format(p)+' ₺';}
+function formatDate(d){if(!d)return'-';let ds=String(d);if(!ds.endsWith('Z')&&!ds.includes('+'))ds+='Z';const dt=new Date(ds);if(isNaN(dt))return'-';const tr=new Date(dt.getTime()+3*3600000);const day=String(tr.getUTCDate()).padStart(2,'0');const mon=String(tr.getUTCMonth()+1).padStart(2,'0');const yr=tr.getUTCFullYear();const hr=String(tr.getUTCHours()).padStart(2,'0');const min=String(tr.getUTCMinutes()).padStart(2,'0');return day+'.'+mon+'.'+yr+' '+hr+':'+min;}
+function formatPhone(p){if(!p)return'-';let s=String(p);if(!s.startsWith('+')&&!s.startsWith('0'))s='0'+s;return s;}
+function badge(d){if(!d)d='yeni';const l={'yeni':'Yeni','aktarıldı':'Aktarıldı','aranacak':'Aranacak','aranıyor':'Aranıyor','arandı':'Arandı','randevu':'Randevu','ilgilenmiyor':'İlgilenmiyor','aranmayacak':'Aranmayacak','arama_yapildi':'Arama Yapıldı','aktarildi':'Aktarıldı','tekrar_aranacak':'Tekrar Aranacak'};const c=d.replace(/[ıİ]/g,'i').replace(/[üÜ]/g,'u').replace(/[öÖ]/g,'o').replace(/[çÇ]/g,'c').replace(/[şŞ]/g,'s').replace(/[ğĞ]/g,'g');return`<span class="badge badge-${c}">${l[d]||d}</span>`;}
+function islemBadge(t){return t==='kiralik'?'<span class="badge badge-kiralik">Kiralık</span>':'<span class="badge badge-satilik">Satılık</span>';}
+function showSection(n,el){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));document.getElementById('sec-'+n).classList.add('active');if(el)el.classList.add('active');else{document.querySelectorAll('.nav-btn').forEach(b=>{if(b.getAttribute('onclick')&&b.getAttribute('onclick').indexOf("'"+n+"'")!==-1)b.classList.add('active');});}location.hash=n;}
+function setIslem(v,el){islemTuru=v;document.querySelectorAll('#islemToggle .toggle-btn').forEach(b=>{b.className='toggle-btn'});el.classList.add(v==='satilik'?'active-green':'active-orange');document.getElementById('fiyatLabel').textContent=v==='kiralik'?'Aylık Kira (₺) *':'Fiyat (₺) *';}
+
+function getNextIlanId(){if(!allData||!allData.leads||!allData.leads.length)return'SAH-001';let max=0;allData.leads.forEach(l=>{const m=String(l.ilan_id).match(/(\d+)$/);if(m){const n=parseInt(m[1]);if(n>max)max=n;}});return'SAH-'+String(max+1).padStart(3,'0');}
+function resetForm(){
+  ['f_ilan_id','f_sahip','f_tel','f_fiyat','f_baslik','f_aciklama','f_url','f_il','f_ilce','f_mahalle','f_m2_brut','f_m2_net','f_kat_sayisi','f_arazi_m2','f_ada','f_parsel','f_gabari','f_isyeri_m2','f_isyeri_kat','f_ilan_tarihi'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['f_kategori','f_oda','f_bina_yasi','f_kat','f_isitma','f_banyo','f_kullanim','f_esyali','f_site','f_cephe','f_takas','f_kredi','f_balkon','f_imar','f_tapu','f_isyeri_yasi','f_isyeri_isitma','f_isyeri_kullanim','f_isyeri_kredi'].forEach(id=>{const e=document.getElementById(id);if(e)e.selectedIndex=0;});
+  islemTuru='satilik';
+  document.querySelectorAll('#islemToggle .toggle-btn').forEach(b=>b.className='toggle-btn');
+  document.querySelectorAll('#islemToggle .toggle-btn')[0].classList.add('active-green');
+  document.getElementById('fiyatLabel').textContent='Fiyat (₺) *';
+}
+function sv(id,val){const e=document.getElementById(id);if(!e||!val)return;if(e.tagName==='SELECT'){for(let i=0;i<e.options.length;i++){if(e.options[i].value===val||e.options[i].text===val){e.selectedIndex=i;return;}};}else{e.value=val;}}
+function fillForm(l){
+  resetForm();
+  sv('f_ilan_id',l.ilan_id);sv('f_sahip',l.ilan_sahibi);sv('f_tel',l.telefon);sv('f_fiyat',l.fiyat);sv('f_baslik',l.baslik);sv('f_aciklama',l.aciklama);sv('f_url',l.ilan_url);sv('f_il',l.il);sv('f_ilce',l.ilce);sv('f_mahalle',l.mahalle);
+  if(l.ilan_tarihi){const dt=new Date(l.ilan_tarihi);if(!isNaN(dt))sv('f_ilan_tarihi',dt.toISOString().split('T')[0]);}
+  if(l.islem_turu==='kiralik'){islemTuru='kiralik';document.querySelectorAll('#islemToggle .toggle-btn').forEach(b=>b.className='toggle-btn');document.querySelectorAll('#islemToggle .toggle-btn')[1].classList.add('active-orange');document.getElementById('fiyatLabel').textContent='Aylık Kira (₺) *';}
+  sv('f_kategori',l.mulk_tipi);onKategoriChange();
+  if(konutTypes.includes(l.mulk_tipi)){
+    sv('f_m2_brut',l.metrekare);sv('f_m2_net',l.m2_net);sv('f_oda',l.oda_sayisi);sv('f_bina_yasi',l.bina_yasi);sv('f_kat',l.bulundugu_kat||l.kat);sv('f_kat_sayisi',l.kat_sayisi);sv('f_isitma',l.isitma);sv('f_banyo',l.banyo);sv('f_kullanim',l.kullanim);sv('f_esyali',l.esyali);sv('f_site',l.site_icinde);sv('f_cephe',l.cephe);sv('f_takas',l.takas);sv('f_kredi',l.kredi);sv('f_balkon',l.balkon);
+  }else if(araziTypes.includes(l.mulk_tipi)){
+    sv('f_arazi_m2',l.metrekare);sv('f_ada',l.ada);sv('f_parsel',l.parsel);sv('f_imar',l.imar);sv('f_tapu',l.tapu);sv('f_gabari',l.gabari);
+  }else if(isyeriTypes.includes(l.mulk_tipi)){
+    sv('f_isyeri_m2',l.metrekare);sv('f_isyeri_yasi',l.bina_yasi);sv('f_isyeri_kat',l.kat_sayisi);sv('f_isyeri_isitma',l.isitma);sv('f_isyeri_kullanim',l.kullanim);sv('f_isyeri_kredi',l.kredi);
+  }
+}
+async function deleteCurrentLead(){
+  if(!currentDetailLead)return;
+  if(!confirm('⚠️ "'+currentDetailLead.ilan_id+' — '+currentDetailLead.baslik+'" ilanını silmek istediğinize emin misiniz?\n\nBu işlem geri alınamaz!'))return;
+  try{
+    const res=await fetch(DELETE_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ilan_id:currentDetailLead.ilan_id})});
+    const data=await res.json();
+    if(data.success){closeDetail();await loadData();alert('✅ İlan başarıyla silindi!');}
+    else alert('❌ Hata: '+(data.message||'Bilinmeyen hata'));
+  }catch(e){alert('❌ Bağlantı hatası: '+e.message);}
+}
+function editCurrentLead(){
+  if(!currentDetailLead)return;
+  closeDetail();
+  editMode=true;
+  document.getElementById('modalTitle').textContent='✏️ İlan Düzenle — '+currentDetailLead.ilan_id;
+  document.getElementById('f_ilan_id').readOnly=true;
+  document.getElementById('f_ilan_id').style.opacity='0.6';
+  document.getElementById('submitBtn').textContent='💾 Güncelle';
+  fillForm(currentDetailLead);
+  document.getElementById('modal').classList.add('open');
+}
+function openModal(){editMode=false;resetForm();document.getElementById('modalTitle').textContent='➕ Yeni İlan Ekle';document.getElementById('f_ilan_id').readOnly=false;document.getElementById('f_ilan_id').style.opacity='1';document.getElementById('submitBtn').textContent='💾 Kaydet';document.getElementById('modal').classList.add('open');onKategoriChange();document.getElementById('f_ilan_id').value=getNextIlanId();}
+function closeModal(){document.getElementById('modal').classList.remove('open');editMode=false;}
+
+// DETAIL PANEL
+function openDetail(lead){
+  currentDetailLead=lead;
+  document.getElementById('detailOverlay').classList.add('open');
+  document.getElementById('detailPanel').classList.add('open');
+  document.getElementById('detailTitle').textContent=lead.ilan_id+' — '+( lead.baslik||'İlan Detayı');
+  const b=document.getElementById('detailBody');
+  const v=(lbl,val)=>val?`<div class="detail-row"><div class="detail-label">${lbl}</div><div class="detail-value">${val}</div></div>`:'';
+  b.innerHTML=`
+    <div class="detail-badges">${islemBadge(lead.islem_turu)} ${badge(lead.durum)}</div>
+    <div class="detail-value big">${formatPrice(lead.fiyat)}</div>
+
+    <div class="detail-section">📌 İlan Bilgileri</div>
+    ${v('İlan ID',lead.ilan_id)}
+    ${v('Sahibinden No',lead.sahibinden_no)}
+    ${v('Başlık',lead.baslik)}
+    ${v('Kategori',lead.mulk_tipi)}
+    ${v('İşlem Türü',lead.islem_turu==='kiralik'?'Kiralık':'Satılık')}
+    ${v('İlan Tarihi',shortDate(lead.ilan_tarihi))}
+    ${lead.aciklama?`<div class="detail-section">📝 Açıklama</div><div class="detail-row"><div style="color:var(--text);font-size:13px;line-height:1.6;white-space:pre-wrap;max-height:200px;overflow-y:auto;padding:8px 0">${lead.aciklama}</div></div>`:''}
+
+    <div class="detail-section">👤 İletişim</div>
+    ${v('İlan Sahibi',lead.ilan_sahibi)}
+    ${v('Telefon',`<a class="phone-link" href="tel:${lead.telefon}">${formatPhone(lead.telefon)}</a>`)}
+
+    <div class="detail-section">📍 Konum</div>
+    ${v('İl',lead.il)}
+    ${v('İlçe',lead.ilce)}
+    ${v('Mahalle',lead.mahalle)}
+
+    <div class="detail-section">🏠 Özellikler</div>
+    ${v('m² (Brüt)',lead.metrekare?lead.metrekare+' m²':null)}
+    ${v('m² (Net)',lead.m2_net?lead.m2_net+' m²':null)}
+    ${v('m² Fiyatı',lead.m2_fiyati?formatPrice(lead.m2_fiyati)+'/m²':null)}
+    ${v('Kaks (Emsal)',lead.kaks)}
+    ${v('Oda Sayısı',lead.oda_sayisi)}
+    ${v('Bina Yaşı',lead.bina_yasi)}
+    ${v('Bulunduğu Kat',lead.bulundugu_kat||lead.kat)}
+    ${v('Kat Sayısı',lead.kat_sayisi)}
+    ${v('Isıtma',lead.isitma)}
+    ${v('Banyo',lead.banyo)}
+    ${v('Balkon',lead.balkon)}
+    ${v('Eşyalı',lead.esyali)}
+    ${v('Site İçinde',lead.site_icinde)}
+    ${v('Cephe',lead.cephe)}
+    ${v('Kullanım',lead.kullanim)}
+    ${v('Takas',lead.takas)}
+    ${v('Krediye Uygun',lead.kredi)}
+    ${v('İmar Durumu',lead.imar)}
+    ${v('Ada / Parsel',(lead.ada&&lead.parsel)?lead.ada+' / '+lead.parsel:(lead.ada||lead.parsel||null))}
+    ${v('Tapu Durumu',lead.tapu)}
+    ${v('Gabari',lead.gabari)}
+
+    <div class="detail-section">📊 Sistem</div>
+    <div class="detail-row"><div class="detail-label">Durum</div><div class="detail-value">
+      <select class="status-select" id="detailStatus" onchange="updateStatus('${lead.ilan_id}',this.value)">
+        <option value="yeni" ${lead.durum==='yeni'?'selected':''}>🔵 Yeni</option>
+        <option value="aktarildi" ${(lead.durum==='aktarildi'||lead.durum==='aktarıldı')?'selected':''}>🟢 Aktarıldı</option>
+        <option value="aranacak" ${lead.durum==='aranacak'?'selected':''}>📞 Aranacak</option>
+        <option value="arama_yapildi" ${(lead.durum==='arama_yapildi'||lead.durum==='arandı')?'selected':''}>🟣 Arama Yapıldı</option>
+        <option value="randevu" ${lead.durum==='randevu'?'selected':''}>✅ Randevu</option>
+        <option value="ilgilenmiyor" ${lead.durum==='ilgilenmiyor'?'selected':''}>🔴 İlgilenmiyor</option>
+        <option value="tekrar_aranacak" ${lead.durum==='tekrar_aranacak'?'selected':''}>🔄 Tekrar Aranacak</option>
+        <option value="aranmayacak" ${lead.durum==='aranmayacak'?'selected':''}>⚫ Aranmayacak</option>
+      </select>
+    </div></div>
+    <div class="detail-section"><div class="detail-section-title">📝 NOTLAR</div>
+      <textarea id="detailNotlar" placeholder="Not ekle... (örn: Akşam 7'den sonra arayın dedi)" onblur="autoSaveNotes('${lead.ilan_id}')" style="width:100%;min-height:60px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:8px;font-size:13px;resize:vertical;font-family:inherit">${lead.notlar||''}</textarea>
+      <div id="geriAramaRow" style="display:${lead.durum==='tekrar_aranacak'?'flex':'none'};gap:8px;margin-top:8px;align-items:center">
+        <label style="font-size:12px;color:var(--text2)">📅 Geri Arama:</label>
+        <input type="datetime-local" id="detailGeriArama" value="${lead.geri_arama_tarihi?lead.geri_arama_tarihi.slice(0,16):''}" onchange="autoSaveNotes('${lead.ilan_id}')" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:8px;font-size:12px">
+        <span id="geriAramaSaved" style="font-size:11px;color:var(--green);opacity:0;transition:opacity .3s">✅ Kaydedildi</span>
+      </div>
+    </div>
+    ${v('Arama Sayısı',lead.arama_sayisi)}
+    ${v('Son Arama',formatDate(lead.son_arama)!=='-'?formatDate(lead.son_arama):null)}
+    ${v('Kayıt Tarihi',formatDate(lead.created_at))}
+    ${lead.ilan_url?v('İlan URL',`<a class="detail-url" href="${lead.ilan_url}" target="_blank">${lead.ilan_url}</a>`):''}
+    ${renderLeadCalls(lead.ilan_id)}
+  `;
+}
+async function updateStatus(ilanId,durum){
+  try{
+    const res=await fetch(STATUS_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ilan_id:ilanId,durum:durum})});
+    const data=await res.json();
+    if(data.success){if(currentDetailLead)currentDetailLead.durum=durum;const gar=document.getElementById('geriAramaRow');if(gar)gar.style.display=durum==='tekrar_aranacak'?'flex':'none';await loadData();}
+    else alert('❌ Hata: '+(data.message||'Bilinmeyen hata'));
+  }catch(e){alert('❌ Bağlantı hatası: '+e.message);}
+}
+function closeDetail(){document.getElementById('detailOverlay').classList.remove('open');document.getElementById('detailPanel').classList.remove('open');}
+
+async function callLead(){
+  if(!currentDetailLead){alert('Lütfen önce bir ilan seçin');return;}
+  const btn=document.getElementById('callLeadBtn');
+  const origText=btn.textContent;
+  
+  if(!confirm(`📞 ${currentDetailLead.ilan_sahibi} (${formatPhone(currentDetailLead.telefon)}) aranacak.\n\nDevam etmek istiyor musunuz?`))return;
+  
+  btn.textContent='📞 Aranıyor...';btn.disabled=true;btn.style.opacity='0.7';
+  
+  try{
+    const res=await fetch(CALL_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ilan_id:currentDetailLead.ilan_id})});
+    const data=await res.json();
+    if(data.success||data.callId||data.call_id){
+      btn.textContent='✅ Arama Başlatıldı';btn.style.background='var(--purple)';
+      if(currentDetailLead)currentDetailLead.durum='arama_yapildi';
+      await loadData();
+      // 3 saniye sonra butonu geri döndür
+      setTimeout(()=>{btn.textContent=origText;btn.disabled=false;btn.style.opacity='1';btn.style.background='var(--green)';},3000);
+    } else {
+      alert('❌ Arama başlatılamadı: '+(data.message||data.error||'Bilinmeyen hata'));
+      btn.textContent=origText;btn.disabled=false;btn.style.opacity='1';
+    }
+  }catch(e){
+    alert('❌ Bağlantı hatası: '+e.message);
+    btn.textContent=origText;btn.disabled=false;btn.style.opacity='1';
+  }
+}
+
+function shortDate(d){if(!d||d==='-')return'-';const dt=new Date(d);if(isNaN(dt))return'-';const day=String(dt.getUTCDate()).padStart(2,'0');const mon=String(dt.getUTCMonth()+1).padStart(2,'0');const yr=String(dt.getUTCFullYear());return day+'.'+mon+'.'+yr;}
+function shortDateTR(d){if(!d||d==='-')return'-';let ds=String(d);if(!ds.endsWith('Z')&&!ds.includes('+'))ds+='Z';const dt=new Date(ds);if(isNaN(dt))return'-';const tr=new Date(dt.getTime()+3*3600000);const day=String(tr.getUTCDate()).padStart(2,'0');const mon=String(tr.getUTCMonth()+1).padStart(2,'0');const yr=String(tr.getUTCFullYear());return day+'.'+mon+'.'+yr;}
+function waBadge(d){const map={bekliyor:{icon:'⏳',label:'Bekliyor',cls:'bekliyor'},gonderildi:{icon:'✓',label:'Gönderildi',cls:'gonderildi'},iletildi:{icon:'✓✓',label:'İletildi',cls:'iletildi'},okundu:{icon:'✓✓',label:'Okundu',cls:'okundu'},hata:{icon:'✕',label:'Hata',cls:'hata'}};const m=map[d]||map.bekliyor;return`<span class="wa-badge ${m.cls}">${m.icon} ${m.label}</span>`;}
+function leadRow(l,full){
+  const click=`onclick="openDetail(allData.leads.find(x=>x.ilan_id==='${l.ilan_id}'))"`;
+  const wa=waBadge(l.whatsapp_durumu||'bekliyor');
+  if(full)return`<tr><td onclick="event.stopPropagation()"><input type="checkbox" class="lead-cb" value="${l.ilan_id}" onchange="updateBulkBar()"></td><td ${click}><strong>${l.ilan_id}</strong></td><td ${click}>${l.baslik||'-'}</td><td ${click}>${islemBadge(l.islem_turu)}</td><td ${click}>${l.mulk_tipi||'-'}</td><td ${click} class="fiyat">${formatPrice(l.fiyat)}</td><td ${click}>${l.il||'-'} / ${l.ilce||'-'}</td><td><a class="phone-link" href="tel:${l.telefon}">${formatPhone(l.telefon)}</a></td><td ${click}>${l.ilan_sahibi||'-'}</td><td ${click}>${shortDate(l.ilan_tarihi)}</td><td ${click}>${shortDateTR(l.created_at)}</td><td ${click}>${badge(l.durum)}</td><td ${click}>${wa}</td></tr>`;
+  return`<tr ${click}><td><strong>${l.ilan_id}</strong></td><td>${l.baslik||'-'}</td><td>${islemBadge(l.islem_turu)}</td><td>${l.mulk_tipi||'-'}</td><td class="fiyat">${formatPrice(l.fiyat)}</td><td>${l.il||'-'} / ${l.ilce||'-'}</td><td>${l.ilan_sahibi||'-'}</td><td>${shortDate(l.ilan_tarihi)}</td><td>${shortDateTR(l.created_at)}</td><td>${badge(l.durum)}</td><td>${wa}</td></tr>`;
+}
+
+function renderSummary(s){
+  const waCount=(allData&&allData.leads)?allData.leads.filter(l=>l.whatsapp_durumu&&l.whatsapp_durumu!=='bekliyor').length:0;
+  const c=[{label:'Toplam İlan',value:s.toplam_ilan,cls:'blue'},{label:'Bekleyen',value:s.bekleyen,cls:'orange'},{label:'Aktarıldı',value:s.aktarildi||0,cls:'cyan'},{label:'Randevu',value:s.randevu,cls:'green'},{label:'İlgilenmiyor',value:s.ilgilenmiyor,cls:'red'},{label:'WhatsApp',value:waCount,cls:'green'}];
+  document.getElementById('summaryCards').innerHTML=c.map(x=>`<div class="card ${x.cls}"><div class="card-label">${x.label}</div><div class="card-value">${x.value}</div></div>`).join('');
+}
+function renderLeads(leads){
+  // Kayit tarihine gore sirala (en yeni en ustte)
+  leads.sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
+  // Kategori dropdown'unu doldur
+  const kats=[...new Set(leads.map(l=>l.mulk_tipi).filter(Boolean))].sort();
+  const katSel=document.getElementById('leadKategori');
+  const curKat=katSel.value;
+  katSel.innerHTML='<option value="">Tüm Kategoriler</option>'+kats.map(k=>`<option value="${k}"${k===curKat?' selected':''}>${k}</option>`).join('');
+  window._allLeads=leads;
+  renderGeriAramaUyari(leads);
+  updateDurumDropdown();
+  filterLeads();
+}
+let currentLeadTab='aktif';
+const aktifDurumlar=['yeni','aktarildi','aktarıldı','aranacak','arama_yapildi','arandı','randevu','tekrar_aranacak'];
+const pasifDurumlar=['ilgilenmiyor','aranmayacak'];
+
+function switchLeadTab(tab){
+  currentLeadTab=tab;
+  document.getElementById('tabAktif').classList.toggle('active',tab==='aktif');
+  document.getElementById('tabPasif').classList.toggle('active',tab==='pasif');
+  updateDurumDropdown();
+  filterLeads();
+}
+
+function updateDurumDropdown(){
+  const sel=document.getElementById('leadDurum');
+  const val=sel.value;
+  if(currentLeadTab==='aktif'){
+    sel.innerHTML='<option value="">Tüm Aktif</option><option value="yeni">🔵 Yeni</option><option value="aktarildi">🟢 Aktarıldı</option><option value="aranacak">📞 Aranacak</option><option value="arama_yapildi">🟣 Arama Yapıldı</option><option value="randevu">✅ Randevu</option><option value="tekrar_aranacak">🔄 Tekrar Aranacak</option>';
+  } else {
+    sel.innerHTML='<option value="">Tüm Pasif</option><option value="ilgilenmiyor">🔴 İlgilenmiyor</option><option value="aranmayacak">⚫ Aranmayacak</option>';
+  }
+}
+
+function filterLeads(){
+  const leads=window._allLeads||[];
+  const q=(document.getElementById('leadSearch').value||'').toLowerCase();
+  const kat=document.getElementById('leadKategori').value;
+  const islem=document.getElementById('leadIslem').value;
+  const durum=document.getElementById('leadDurum').value;
+  const tabDurumlar=currentLeadTab==='aktif'?aktifDurumlar:pasifDurumlar;
+  const filtered=leads.filter(l=>{
+    if(!tabDurumlar.includes(l.durum||'yeni'))return false;
+    if(kat&&l.mulk_tipi!==kat)return false;
+    if(islem&&l.islem_turu!==islem)return false;
+    if(durum&&l.durum!==durum&&!(durum==='aktarildi'&&l.durum==='aktarıldı'))return false;
+    if(q){const t=((l.ilan_id||'')+(l.baslik||'')+(l.il||'')+(l.ilce||'')+(l.telefon||'')+(l.ilan_sahibi||'')).toLowerCase();if(t.indexOf(q)===-1)return false;}
+    return true;
+  });
+  const aktifCount=leads.filter(l=>aktifDurumlar.includes(l.durum||'yeni')).length;
+  const pasifCount=leads.filter(l=>pasifDurumlar.includes(l.durum||'yeni')).length;
+  document.getElementById('tabAktifCount').textContent=aktifCount;
+  document.getElementById('tabPasifCount').textContent=pasifCount;
+  document.getElementById('overviewLeads').innerHTML=leads.filter(l=>aktifDurumlar.includes(l.durum||'yeni')).slice(0,8).map(l=>leadRow(l,false)).join('');
+  document.getElementById('leadsTable').innerHTML=filtered.map(l=>leadRow(l,true)).join('');
+}
+function formatDuration(s){if(!s||s===0)return'-';const m=Math.floor(s/60);const sec=s%60;return m>0?`${m}dk ${sec}sn`:`${sec}sn`;}
+function callBadge(d){if(!d)return badge('tamamlandi');const labels={'Randevu alindi':'✅ Randevu','Tekrar aranacak':'🔄 Tekrar Ara','Ilgilenmiyor':'❌ İlgilenmiyor','Kisa arama':'⏱ Kısa','Gorusme tamamlandi':'💬 Tamam'};const cls={'Randevu alindi':'randevu_alindi','Tekrar aranacak':'tekrar_ara','Ilgilenmiyor':'ilgilenmiyor','Kisa arama':'kisa_arama','Gorusme tamamlandi':'gorusme_tamamlandi'};return`<span class="badge badge-${cls[d]||'tamamlandi'}">${labels[d]||d}</span>`;}
+function toggleCallDetail(id){const el=document.getElementById('call-detail-'+id);if(!el)return;const audio=el.querySelector('audio');if(el.classList.contains('open')&&audio&&!audio.paused){return;}el.classList.toggle('open');}
+function renderCalls(c){
+  if(!c||!c.length){document.getElementById('callsContent').innerHTML='<div class="empty"><div class="empty-icon">📞</div>Henüz arama yapılmadı<br><span style="font-size:13px;opacity:.6">İlan detayından arama başlatabilirsiniz</span></div>';return;}
+  let html='<div style="overflow-x:auto"><table><thead><tr><th>Tarih</th><th>İlan</th><th>Kişi</th><th>Telefon</th><th>Süre</th><th>Maliyet</th><th>Sonuç</th><th>Kayıt</th></tr></thead><tbody>';
+  c.forEach((x,i)=>{
+    const hasRec=x.recording_url&&x.recording_url!==''&&!x.recording_url.includes('example');
+    const hasTrans=x.transcript&&x.transcript.length>5;
+    html+=`<tr class="call-row" onclick="toggleCallDetail(${i})">
+      <td>${formatDate(x.created_at)}</td>
+      <td><strong>${x.ilan_id||'-'}</strong><br><span style="font-size:11px;color:var(--text2)">${(x.baslik||'').substring(0,35)}</span></td>
+      <td>${x.ilan_sahibi||'-'}</td>
+      <td><a class="phone-link" href="tel:${x.telefon||''}">${formatPhone(x.telefon)}</a></td>
+      <td>${formatDuration(x.sure_saniye)}</td>
+      <td style="color:var(--orange)">${x.maliyet?'$'+Number(x.maliyet).toFixed(2):'-'}</td>
+      <td>${callBadge(x.ozet||x.durum)}</td>
+      <td>${hasRec?'<span style="color:var(--green)" title="Kayıt mevcut">🎙️</span>':'<span style="opacity:.3">—</span>'}</td>
+    </tr>`;
+    html+=`<tr class="call-expand" id="call-detail-${i}"><td colspan="8">
+      <div class="call-detail-grid">
+        <div class="call-info-block">
+          <div class="call-info-title">📊 Arama Bilgileri</div>
+          <div class="call-stat"><span class="call-stat-label">Call ID</span><span class="call-stat-value" style="font-size:11px;color:var(--text2)">${x.call_id||'-'}</span></div>
+          <div class="call-stat"><span class="call-stat-label">Süre</span><span class="call-stat-value">${formatDuration(x.sure_saniye)}</span></div>
+          <div class="call-stat"><span class="call-stat-label">Maliyet</span><span class="call-stat-value" style="color:var(--orange)">${x.maliyet?'$'+Number(x.maliyet).toFixed(2):'-'}</span></div>
+          <div class="call-stat"><span class="call-stat-label">Randevu</span><span class="call-stat-value">${x.randevu_alindi?'✅ Evet':'—'}</span></div>
+          <div class="call-stat"><span class="call-stat-label">Tekrar Ara</span><span class="call-stat-value">${x.tekrar_ara?'🔄 Evet':'—'}</span></div>
+        </div>
+        <div class="call-info-block">
+          <div class="call-info-title">📋 İlan Bilgileri</div>
+          <div class="call-stat"><span class="call-stat-label">İlan ID</span><span class="call-stat-value">${x.ilan_id||'-'}</span></div>
+          <div class="call-stat"><span class="call-stat-label">İlan Sahibi</span><span class="call-stat-value">${x.ilan_sahibi||'-'}</span></div>
+          <div class="call-stat"><span class="call-stat-label">Telefon</span><span class="call-stat-value">${formatPhone(x.telefon)}</span></div>
+          <div class="call-stat"><span class="call-stat-label">Sonuç</span><span class="call-stat-value">${x.ozet||x.durum||'-'}</span></div>
+        </div>
+      </div>
+      ${hasRec?`<div class="audio-player" id="aplayer-${i}">
+        <div class="audio-controls">
+          <button class="play-btn" onclick="event.stopPropagation();toggleAudio(${i})">▶</button>
+          <div class="audio-timeline">
+            <div class="audio-seekbar" onclick="event.stopPropagation();seekAudio(event,${i})">
+              <div class="audio-buffered" id="abuf-${i}"></div>
+              <div class="audio-progress" id="aprog-${i}"></div>
+            </div>
+            <div class="audio-times">
+              <span id="atime-${i}">0:00</span>
+              <span id="adur-${i}">--:--</span>
+            </div>
+          </div>
+          <button class="audio-speed" onclick="event.stopPropagation();cycleSpeed(${i})" title="Hız değiştir">1x</button>
+        </div>
+        <audio id="audio-${i}" src="${x.recording_url}" preload="auto"
+          ontimeupdate="updateProgress(${i})"
+          onloadedmetadata="showDuration(${i})"
+          onended="audioEnded(${i})"
+          onprogress="updateBuffer(${i})"
+          onwaiting="document.querySelector('#aplayer-${i} .play-btn').textContent='⏳'"
+          onplaying="document.querySelector('#aplayer-${i} .play-btn').textContent='⏸'"
+          onerror="document.querySelector('#aplayer-${i} .play-btn').textContent='⚠'"
+          onstalled="document.querySelector('#aplayer-${i} .play-btn').textContent='⏳'"></audio>
+      </div>`:''}
+      ${hasTrans?`<div style="margin-top:12px"><div style="font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:8px">💬 Transkript</div><div class="transcript-box">${x.transcript}</div></div>`:'<div style="margin-top:12px;font-size:13px;color:var(--text2);opacity:.5">Transkript mevcut değil</div>'}
+    </td></tr>`;
+  });
+  html+='</tbody></table></div>';
+  document.getElementById('callsContent').innerHTML=html;
+}
+// === CUSTOM AUDIO PLAYER ===
+const audioSpeeds=[1,1.25,1.5,2,0.75];
+function toggleAudio(i){
+  const a=document.getElementById('audio-'+i);if(!a)return;
+  // Pause all other players
+  document.querySelectorAll('audio').forEach(el=>{if(el.id!=='audio-'+i&&!el.paused){el.pause();const idx=el.id.replace('audio-','');const btn=document.querySelector('#aplayer-'+idx+' .play-btn');if(btn)btn.textContent='▶';}});
+  if(a.paused){a.play().catch(e=>console.error(e));}else{a.pause();document.querySelector('#aplayer-'+i+' .play-btn').textContent='▶';}
+}
+function fmtTime(s){if(!s||isNaN(s)||!isFinite(s))return'--:--';s=Math.floor(s);const m=Math.floor(s/60);const sec=s%60;return m+':'+String(sec).padStart(2,'0');}
+function updateProgress(i){
+  const a=document.getElementById('audio-'+i);if(!a||!a.duration)return;
+  const pct=(a.currentTime/a.duration)*100;
+  const prog=document.getElementById('aprog-'+i);if(prog)prog.style.width=pct+'%';
+  const t=document.getElementById('atime-'+i);if(t)t.textContent=fmtTime(a.currentTime);
+}
+function showDuration(i){
+  const a=document.getElementById('audio-'+i);if(!a)return;
+  const d=document.getElementById('adur-'+i);if(d)d.textContent=fmtTime(a.duration);
+}
+function updateBuffer(i){
+  const a=document.getElementById('audio-'+i);if(!a||!a.buffered.length||!a.duration)return;
+  const buf=(a.buffered.end(a.buffered.length-1)/a.duration)*100;
+  const el=document.getElementById('abuf-'+i);if(el)el.style.width=buf+'%';
+}
+function seekAudio(e,i){
+  const a=document.getElementById('audio-'+i);if(!a||!a.duration)return;
+  const bar=e.currentTarget;const rect=bar.getBoundingClientRect();
+  const pct=(e.clientX-rect.left)/rect.width;
+  a.currentTime=pct*a.duration;
+  if(a.paused)a.play().catch(()=>{});
+}
+function audioEnded(i){
+  const btn=document.querySelector('#aplayer-'+i+' .play-btn');if(btn)btn.textContent='▶';
+  const prog=document.getElementById('aprog-'+i);if(prog)prog.style.width='0%';
+  const t=document.getElementById('atime-'+i);if(t)t.textContent='0:00';
+}
+function cycleSpeed(i){
+  const a=document.getElementById('audio-'+i);if(!a)return;
+  const btn=document.querySelector('#aplayer-'+i+' .audio-speed');if(!btn)return;
+  const cur=a.playbackRate;const idx=audioSpeeds.indexOf(cur);
+  const next=audioSpeeds[(idx+1)%audioSpeeds.length];
+  a.playbackRate=next;btn.textContent=next+'x';
+}
+function filterCalls(){if(!allData||!allData.calls)return;const q=document.getElementById('callSearch').value.toLowerCase();const f=allData.calls.filter(x=>(x.ilan_sahibi||'').toLowerCase().includes(q)||(x.baslik||'').toLowerCase().includes(q)||(x.ilan_id||'').toLowerCase().includes(q)||(x.ozet||'').toLowerCase().includes(q));renderCalls(f);}
+function renderAppointments(a){
+  const calls=allData.calls||[];
+  const randevuCalls=calls.filter(c=>c.randevu_alindi||c.durum==='Randevu alindi'||(c.durum||'').toLowerCase().includes('randevu'));
+  let items=[];
+  if(a&&a.length){a.forEach(x=>{items.push({type:'appointment',randevu_tarihi:x.randevu_tarihi,randevu_turu:x.randevu_turu||'Değerleme',konum:x.konum||'-',durum:x.durum||'bekliyor',baslik:x.baslik||'-',ilan_sahibi:x.ilan_sahibi||'-',telefon:x.telefon||'',ilan_id:x.ilan_id||x.lead_id||'-',notlar:x.sonuc_notu||'',arama_tarihi:x.created_at,call_id:x.call_log_id||''});});}
+  randevuCalls.forEach(c=>{
+    const exists=items.some(i=>i.ilan_id===c.ilan_id);
+    items.push({type:'call',randevu_tarihi:c.randevu_tarihi||null,randevu_turu:'Değerleme',konum:c.randevu_notu||'',durum:c.randevu_alindi?'onaylandi':'bekliyor',baslik:c.baslik||'-',ilan_sahibi:c.ilan_sahibi||'-',telefon:c.telefon||'',ilan_id:c.ilan_id||'-',notlar:c.randevu_notu||c.ozet||'',arama_tarihi:c.created_at,call_id:c.id||'',duplicate:exists});
+  });
+  items=items.filter(i=>!i.duplicate);
+  if(!items.length){document.getElementById('appointmentsContent').innerHTML='<div class="empty"><div class="empty-icon">📅</div>Henüz randevu yok</div>';return;}
+  items.sort((a,b)=>new Date(b.arama_tarihi||0)-new Date(a.arama_tarihi||0));
+  let html=`<div style="overflow-x:auto"><table><thead><tr><th>📅 RANDEVU TARİHİ</th><th>İLAN</th><th>KİŞİ</th><th>TELEFON</th><th>TÜR</th><th>KONUM / NOT</th><th>DURUM</th><th>📱 WA</th><th>İŞLEM</th></tr></thead><tbody>`;
+  items.forEach((x,idx)=>{
+    const dt=x.randevu_tarihi?new Date(x.randevu_tarihi):null;
+    const dtVal=dt?dt.toISOString().slice(0,16):'';
+    const rdTarih=dt?formatDate(x.randevu_tarihi):'<span style="color:var(--orange);font-size:11px">⏳ Belirlenmedi</span>';
+    const rdDurum=x.durum==='onaylandi'||x.durum==='bekliyor'?'<span class="badge badge-randevu_alindi">✅ Onaylandı</span>':badge(x.durum);
+    html+=`<tr id="appt-row-${idx}">
+      <td style="font-weight:700;color:var(--green)">${rdTarih}</td>
+      <td><div style="font-weight:600">${x.ilan_id}</div><div style="font-size:11px;color:var(--text2)">${x.baslik}</div></td>
+      <td style="font-weight:500">${x.ilan_sahibi}</td>
+      <td>${x.telefon?`<a class="phone-link" href="tel:${x.telefon}">${formatPhone(x.telefon)}</a>`:'-'}</td>
+      <td><span style="font-size:12px">${x.randevu_turu}</span></td>
+      <td style="font-size:12px;max-width:250px" title="${(x.notlar||'').replace(/"/g,'&quot;')}">${x.notlar||'-'}</td>
+      <td>${rdDurum}</td>
+      <td>${waBadge(x.whatsapp_durumu||'bekliyor')}</td>
+      <td><button onclick="editAppt(${idx})" style="background:var(--accent);color:#fff;border:none;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer">✏️ Düzenle</button></td>
+    </tr>
+    <tr id="appt-edit-${idx}" style="display:none;background:var(--surface2)"><td colspan="9" style="padding:16px 20px">
+      <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:end">
+        <div style="flex:1;min-width:200px"><label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">📅 Randevu Tarih & Saat</label><input type="datetime-local" id="appt-dt-${idx}" value="${dtVal}" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px"></div>
+        <div style="flex:2;min-width:250px"><label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">📍 Konum / Not</label><input type="text" id="appt-note-${idx}" value="${(x.notlar||'').replace(/"/g,'&quot;')}" placeholder="Örn: Dairede yerinde değerleme - Avenir Talas 180 A Blok" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px"></div>
+        <div style="display:flex;gap:8px">
+          <button onclick="saveAppt('${x.ilan_id}',${idx})" style="background:var(--green);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">💾 Kaydet</button>
+          <button onclick="cancelAppt(${idx})" style="background:var(--surface);color:var(--text2);border:1px solid var(--border);padding:8px 16px;border-radius:8px;font-size:12px;cursor:pointer">İptal</button>
+        </div>
+      </div>
+    </td></tr>`;
+  });
+  html+='</tbody></table></div>';
+  document.getElementById('appointmentsContent').innerHTML=html;
+}
+function editAppt(idx){document.getElementById('appt-edit-'+idx).style.display='table-row';}
+function cancelAppt(idx){document.getElementById('appt-edit-'+idx).style.display='none';}
+async function saveAppt(ilanId,idx){
+  const dt=document.getElementById('appt-dt-'+idx).value;
+  const note=document.getElementById('appt-note-'+idx).value;
+  const btn=event.target;btn.textContent='⏳...';btn.disabled=true;
+  try{
+    const res=await fetch(STATUS_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ilan_id:ilanId,randevu_tarihi:dt||null,randevu_notu:note})});
+    if(res.ok){btn.textContent='✅ Tamam';setTimeout(()=>loadData(),1000);}
+    else{btn.textContent='❌ Hata';btn.disabled=false;}
+  }catch(e){btn.textContent='❌ Hata';btn.disabled=false;}
+}
+
+// REPORT FUNCTIONS
+function setPeriod(p,el){currentPeriod=p;document.querySelectorAll('.period-tab').forEach(b=>b.classList.remove('active'));if(el)el.classList.add('active');renderReport();}
+function fmtDur(s){if(!s)return'0sn';s=Math.round(s);if(s<60)return s+'sn';const m=Math.floor(s/60);const sec=s%60;if(m<60)return m+'dk '+sec+'sn';const h=Math.floor(m/60);return h+'sa '+Math.floor(m%60)+'dk';}
+function fmtMoney(v){if(!v)return'$0.00';return'$'+Number(v).toFixed(2);}
+function renderReport(){
+  if(!allData||!allData.report){document.getElementById('reportStats').innerHTML='<div class="report-empty">Veri yok</div>';return;}
+  const r=allData.report;const p=currentPeriod;
+  let arama=0,randevu=0,ilgilenmiyor=0,maliyet=0,sure=0,tekrarAra=0;
+  if(p==='bugun'){arama=r.bugun_arama;randevu=r.bugun_randevu;ilgilenmiyor=r.bugun_ilgilenmiyor;maliyet=r.bugun_maliyet;sure=r.bugun_sure;}
+  else if(p==='hafta'){arama=r.hafta_arama;randevu=r.hafta_randevu;maliyet=r.hafta_maliyet;sure=r.hafta_sure;}
+  else{arama=allData.summary.toplam_arama;randevu=allData.summary.toplam_randevu;maliyet=r.toplam_maliyet;sure=r.toplam_sure;}
+  const donusum=arama>0?((randevu/arama)*100).toFixed(1):'0';
+  document.getElementById('reportStats').innerHTML=`
+    <div class="report-stat accent"><div class="report-stat-label">Arama</div><div class="report-stat-value">${arama}</div><div class="report-stat-sub">toplam arama</div></div>
+    <div class="report-stat green"><div class="report-stat-label">Randevu</div><div class="report-stat-value">${randevu}</div><div class="report-stat-sub">%${donusum} dönüşüm</div></div>
+    <div class="report-stat cyan"><div class="report-stat-label">Görüşme</div><div class="report-stat-value">${arama>0?arama-randevu-ilgilenmiyor:0}</div><div class="report-stat-sub">devam eden</div></div>
+    <div class="report-stat purple"><div class="report-stat-label">Başarı</div><div class="report-stat-value">%${donusum}</div><div class="report-stat-sub">randevu oranı</div></div>
+  `;
+}
+function renderTrendChart(){
+  const el=document.getElementById('trendChart');
+  if(!allData||!allData.report||!allData.report.gunluk_trend||!allData.report.gunluk_trend.length){el.innerHTML='<div class="report-empty">Henüz trend verisi yok<br><span style="font-size:11px">Aramalar başladığında burada günlük grafik görünecek</span></div>';return;}
+  const data=allData.report.gunluk_trend;
+  const maxArama=Math.max(...data.map(d=>d.arama),1);
+  const barH=140;
+  let html='<div class="chart-container">';
+  data.forEach(d=>{
+    const h1=Math.max((d.arama/maxArama)*barH,2);
+    const h2=Math.max((d.randevu/maxArama)*barH,0);
+    const dt=new Date(d.tarih);
+    const label=dt.toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit'});
+    html+=`<div class="chart-bar-group">
+      <div class="chart-bar-value">${d.arama}</div>
+      <div style="display:flex;gap:2px;align-items:flex-end;width:100%;height:${barH}px">
+        <div class="chart-bar arama" style="height:${h1}px;flex:1" title="${d.arama} arama"></div>
+        ${d.randevu>0?`<div class="chart-bar randevu" style="height:${h2}px;flex:1" title="${d.randevu} randevu"></div>`:''}
+      </div>
+      <div class="chart-bar-label">${label}</div>
+    </div>`;
+  });
+  html+='</div><div class="chart-legend"><div class="chart-legend-item"><div class="chart-legend-dot" style="background:var(--accent)"></div>Arama</div><div class="chart-legend-item"><div class="chart-legend-dot" style="background:var(--green)"></div>Randevu</div></div>';
+  el.innerHTML=html;
+}
+function renderPieChart(){
+  const el=document.getElementById('pieChart');
+  if(!allData||!allData.report||!allData.report.sonuc_dagilimi||!allData.report.sonuc_dagilimi.length){el.innerHTML='<div class="report-empty">Henüz sonuç verisi yok<br><span style="font-size:11px">Aramalar başladığında burada dağılım görünecek</span></div>';return;}
+  const data=allData.report.sonuc_dagilimi;
+  const total=data.reduce((s,d)=>s+Number(d.sayi),0);
+  const colors={'Randevu alindi':'#10b981','Tekrar aranacak':'#f59e0b','Ilgilenmiyor':'#ef4444','Gorusme tamamlandi':'#8b5cf6','Kisa arama':'#64748b'};
+  const labels={'Randevu alindi':'Randevu','Tekrar aranacak':'Tekrar Ara','Ilgilenmiyor':'İlgilenmiyor','Gorusme tamamlandi':'Tamamlandı','Kisa arama':'Kısa Arama'};
+  let gradParts=[];let cumPct=0;
+  data.forEach(d=>{const pct=(d.sayi/total)*100;const color=colors[d.sonuc]||'#475569';gradParts.push(`${color} ${cumPct}% ${cumPct+pct}%`);cumPct+=pct;});
+  const grad=`conic-gradient(${gradParts.join(',')})`;
+  let legendHtml='';
+  data.forEach(d=>{const color=colors[d.sonuc]||'#475569';const label=labels[d.sonuc]||d.sonuc;legendHtml+=`<div class="pie-legend-item"><div class="pie-legend-dot" style="background:${color}"></div><span class="pie-legend-label">${label}</span><span class="pie-legend-value">${d.sayi}</span></div>`;});
+  el.innerHTML=`<div class="pie-container"><div class="pie-chart" style="background:${grad}"><div class="pie-center"><div class="pie-center-value">${total}</div><div class="pie-center-label">toplam</div></div></div><div class="pie-legend">${legendHtml}</div></div>`;
+}
+function renderCostStats(){
+  const el=document.getElementById('costStats');
+  if(!allData||!allData.report){el.innerHTML='<div class="report-empty">Veri yok</div>';return;}
+  const r=allData.report;
+  const totalCalls=allData.summary.toplam_arama||0;
+  el.innerHTML=`
+    <div class="report-stat pink"><div class="report-stat-label">Toplam Harcama</div><div class="report-stat-value">${fmtMoney(r.toplam_maliyet)}</div><div class="report-stat-sub">${totalCalls} arama</div></div>
+    <div class="report-stat orange"><div class="report-stat-label">Arama Başı</div><div class="report-stat-value">${fmtMoney(r.ort_maliyet)}</div><div class="report-stat-sub">ortalama maliyet</div></div>
+    <div class="report-stat cyan"><div class="report-stat-label">Ort. Süre</div><div class="report-stat-value">${fmtDur(r.ort_sure)}</div><div class="report-stat-sub">arama başına</div></div>
+    <div class="report-stat purple"><div class="report-stat-label">Toplam Süre</div><div class="report-stat-value">${fmtDur(r.toplam_sure)}</div><div class="report-stat-sub">toplam görüşme</div></div>
+  `;
+}
+
+function gv(id){const e=document.getElementById(id);if(!e)return'';return(e.value||'').trim();}
+async function submitLead(){
+  const btn=document.getElementById('submitBtn');
+  const ilan_id=gv('f_ilan_id'),baslik=gv('f_baslik'),telefon=gv('f_tel').replace(/\s/g,''),ilan_sahibi=gv('f_sahip'),fiyat=gv('f_fiyat'),ilce=gv('f_ilce');
+  if(!ilan_id||!baslik||!telefon||!ilan_sahibi||!fiyat||!ilce){alert('Zorunlu alanları doldurun: İlan ID, Başlık, Fiyat, İlçe, Telefon, İlan Sahibi');return;}
+  btn.textContent='⏳ Kaydediliyor...';btn.disabled=true;
+  const kat=gv('f_kategori');
+  let m2=0,m2_net=0,oda='',bina_yasi='',bulundugu_kat='',kat_sayisi='',isitma='',banyo='',kullanim='',esyali='',site_icinde='',cephe='',takas='',kredi='',balkon='',ada='',parsel='',imar='',tapu='',gabari='';
+  if(konutTypes.includes(kat)){
+    m2=Number(gv('f_m2_brut'))||0;m2_net=Number(gv('f_m2_net'))||0;oda=gv('f_oda');bina_yasi=gv('f_bina_yasi');bulundugu_kat=gv('f_kat');kat_sayisi=gv('f_kat_sayisi');isitma=gv('f_isitma');banyo=gv('f_banyo');kullanim=gv('f_kullanim');esyali=gv('f_esyali');site_icinde=gv('f_site');cephe=gv('f_cephe');takas=gv('f_takas');kredi=gv('f_kredi');balkon=gv('f_balkon');
+  }else if(araziTypes.includes(kat)){
+    m2=Number(gv('f_arazi_m2'))||0;ada=gv('f_ada');parsel=gv('f_parsel');imar=gv('f_imar');tapu=gv('f_tapu');gabari=gv('f_gabari');
+  }else if(isyeriTypes.includes(kat)){
+    m2=Number(gv('f_isyeri_m2'))||0;bina_yasi=gv('f_isyeri_yasi');kat_sayisi=gv('f_isyeri_kat');isitma=gv('f_isyeri_isitma');kullanim=gv('f_isyeri_kullanim');kredi=gv('f_isyeri_kredi');
+  }
+  const body={ilan_id,baslik,aciklama:gv('f_aciklama'),fiyat:Number(fiyat),il:gv('f_il'),ilce,mahalle:gv('f_mahalle'),mulk_tipi:kat,oda_sayisi:oda,metrekare:m2,m2_net,telefon,ilan_sahibi,ilan_url:gv('f_url'),islem_turu:islemTuru,ilan_tarihi:gv('f_ilan_tarihi'),bina_yasi,bulundugu_kat,kat_sayisi,isitma,banyo,kullanim,esyali,site_icinde,cephe,takas,kredi,balkon,ada,parsel,imar,tapu,gabari};
+  try{
+    const res=await fetch(ADD_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const data=await res.json();
+    if(data.success){closeModal();await loadData();alert(editMode?'✅ İlan başarıyla güncellendi!':'✅ İlan başarıyla eklendi!');}
+    else alert('❌ Hata: '+(data.message||'Bilinmeyen hata'));
+  }catch(e){alert('❌ Bağlantı hatası: '+e.message);}
+  btn.textContent='💾 Kaydet';btn.disabled=false;
+}
+
+async function loadData(){
+  const btn=document.querySelector('.refresh-btn');btn.classList.add('loading');
+  try{const res=await fetch(API);const json=await res.json();const d=json[0]?.data||json.data;allData=d;renderSummary(d.summary);renderLeads(d.leads);const audioPlaying=document.querySelector('audio')&&[...document.querySelectorAll('audio')].some(a=>!a.paused);const callDetailOpen=document.querySelector('.call-expand.open');if(!audioPlaying&&!callDetailOpen){renderCalls(d.calls);}renderAppointments(d.appointments);renderReport();renderTrendChart();renderPieChart();renderCostStats();document.getElementById('lastUpdate').textContent='Son: '+new Date().toLocaleTimeString('tr-TR');}
+  catch(e){console.error(e);document.getElementById('lastUpdate').textContent='Hata: '+e.message;}
+  btn.classList.remove('loading');document.getElementById('loading').classList.add('hidden');
+}
+loadData();setInterval(loadData,60000);
+// Hash'ten sekme koru
+(function(){var h=location.hash.replace('#','');if(h&&document.getElementById('sec-'+h)){showSection(h);}})();
+window.addEventListener('hashchange',function(){var h=location.hash.replace('#','');if(h&&document.getElementById('sec-'+h))showSection(h);});
+
+// KREDI TAKIP
+const ELEVEN_KEY='sk_726797880cd19c3de18b5ffcfa1d0056b40204a92d20eca4';
+const VAPI_KEY='76f2f9fb-9632-4c62-8ccb-f9abcd609f67';
+async function loadCredits(){
+  try{
+    const er=await fetch('https://api.elevenlabs.io/v1/user/subscription',{headers:{'xi-api-key':ELEVEN_KEY}});
+    const e=await er.json();
+    const used=e.character_count||0,limit=e.character_limit||0,remaining=limit-used;
+    const pct=limit>0?Math.round(used/limit*100):0;
+    const resetDate=e.next_character_count_reset_unix?new Date(e.next_character_count_reset_unix*1000):null;
+    const cost=e.next_invoice?.amount_due_cents?(e.next_invoice.amount_due_cents/100).toFixed(2):'-';
+    const barColor=pct>80?'var(--red)':pct>50?'var(--orange)':'var(--green)';
+    document.getElementById('elevenContent').innerHTML=`<div style="margin-bottom:12px"><span style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Plan</span><div style="font-size:18px;font-weight:700;color:var(--accent);text-transform:capitalize">${e.tier||'?'} <span style="font-size:12px;color:var(--green)">(${e.status})</span></div></div><div style="margin-bottom:12px"><span style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Karakter Kullanımı</span><div style="font-size:22px;font-weight:700">${used.toLocaleString('tr-TR')} <span style="font-size:14px;color:var(--text2)">/ ${limit.toLocaleString('tr-TR')}</span></div><div style="background:var(--surface2);border-radius:6px;height:10px;margin-top:6px;overflow:hidden"><div style="background:${barColor};height:100%;width:${pct}%;border-radius:6px"></div></div><div style="font-size:11px;color:var(--text2);margin-top:4px">${remaining.toLocaleString('tr-TR')} karakter kaldı (${100-pct}%)</div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div><span style="font-size:11px;color:var(--text2)">Aylık Ücret</span><div id="elCost" style="font-size:16px;font-weight:700;color:var(--cyan)">$${cost}</div></div><div><span style="font-size:11px;color:var(--text2)">Yenilenme</span><div style="font-size:14px;font-weight:600">${resetDate?resetDate.toLocaleDateString('tr-TR'):'-'}</div></div></div>`;
+  }catch(ex){document.getElementById('elevenContent').innerHTML='<div class="empty">❌ '+ex.message+'</div>';}
+  try{
+    const vr=await fetch('https://api.vapi.ai/call?limit=100',{headers:{'Authorization':'Bearer '+VAPI_KEY}});
+    const calls=await vr.json();
+    let totalCost=0,totalMin=0,successCalls=0,monthCost=0,monthCalls=0;
+    const now=new Date(),monthStart=new Date(now.getFullYear(),now.getMonth(),1);
+    for(const c of calls){if(c.cost)totalCost+=c.cost;if(c.startedAt&&c.endedAt)totalMin+=(new Date(c.endedAt)-new Date(c.startedAt))/60000;if(c.endedReason==='customer-ended-call'||c.endedReason==='assistant-ended-call')successCalls++;if(c.startedAt&&new Date(c.startedAt)>=monthStart){monthCalls++;if(c.cost)monthCost+=c.cost;}}
+    document.getElementById('vapiContent').innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px"><div><span style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Toplam Arama</span><div style="font-size:22px;font-weight:700;color:var(--accent)">${calls.length}</div></div><div><span style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Başarılı</span><div style="font-size:22px;font-weight:700;color:var(--green)">${successCalls}</div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px"><div><span style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Toplam Süre</span><div style="font-size:16px;font-weight:700">${totalMin.toFixed(1)} dk</div></div><div><span style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Toplam Maliyet</span><div style="font-size:16px;font-weight:700;color:var(--orange)">$${totalCost.toFixed(4)}</div></div></div><div style="border-top:1px solid var(--border);padding-top:12px"><span style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Bu Ay</span><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px"><div><span style="font-size:12px;color:var(--text2)">Arama</span><div style="font-size:16px;font-weight:700">${monthCalls}</div></div><div><span style="font-size:12px;color:var(--text2)">Maliyet</span><div style="font-size:16px;font-weight:700;color:var(--orange)">$${monthCost.toFixed(4)}</div></div></div></div>`;
+    const elCostEl=document.getElementById('elCost');
+    const elUsd=elCostEl?parseFloat(elCostEl.textContent.replace('$',''))||0:0;
+    document.getElementById('costSummary').innerHTML=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px"><div class="card blue"><div class="card-label">ElevenLabs</div><div class="card-value">$${elUsd.toFixed(2)}</div><div style="font-size:11px;color:var(--text2)">Aylık plan</div></div><div class="card orange"><div class="card-label">Vapi.ai</div><div class="card-value">$${monthCost.toFixed(2)}</div><div style="font-size:11px;color:var(--text2)">Bu ay kullanım</div></div><div class="card cyan"><div class="card-label">Netgsm</div><div class="card-value">90 dk</div><div style="font-size:11px;color:var(--text2)">Kalan dakika</div></div><div class="card green"><div class="card-label">Toplam</div><div class="card-value">$${(elUsd+monthCost).toFixed(2)}</div><div style="font-size:11px;color:var(--text2)">Aylık toplam</div></div></div>`;
+  }catch(ex){document.getElementById('vapiContent').innerHTML='<div class="empty">❌ '+ex.message+'</div>';}
+  // Netgsm
+  // Netgsm - paket bilgileri (portalden güncellenir)
+  const ngPaket={dakika_kalan:90,dakika_limit:100,bitis:'13.03.2026',numara:'0850 303 3860',sunucu:'sip.netgsm.com.tr'};
+  const ngPct=Math.round(ngPaket.dakika_kalan/ngPaket.dakika_limit*100);
+  const ngBarColor=ngPct<20?'var(--red)':ngPct<50?'var(--orange)':'var(--green)';
+  document.getElementById('netgsmContent').innerHTML=`<div style="margin-bottom:12px"><span style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Ses Paketi</span><div style="font-size:22px;font-weight:700">${ngPaket.dakika_kalan} <span style="font-size:14px;color:var(--text2)">/ ${ngPaket.dakika_limit} dk</span></div><div style="background:var(--surface2);border-radius:6px;height:10px;margin-top:6px;overflow:hidden"><div style="background:${ngBarColor};height:100%;width:${ngPct}%;border-radius:6px"></div></div><div style="font-size:11px;color:var(--text2);margin-top:4px">${ngPaket.dakika_limit-ngPaket.dakika_kalan} dakika kullanıldı (%${100-ngPct})</div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px"><div><span style="font-size:11px;color:var(--text2)">Numara</span><div style="font-size:14px;font-weight:700;color:var(--green)">${ngPaket.numara}</div></div><div><span style="font-size:11px;color:var(--text2)">Sunucu</span><div style="font-size:14px;font-weight:700">${ngPaket.sunucu}</div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div><span style="font-size:11px;color:var(--text2)">Paket Bitiş</span><div style="font-size:14px;font-weight:700;color:var(--cyan)">${ngPaket.bitis}</div></div><div><span style="font-size:11px;color:var(--text2)">Durum</span><div style="font-size:14px;font-weight:700;color:var(--green)">● Aktif</div></div></div>`;
+}
+setTimeout(loadCredits,2000);
+function toggleSelectAll(el){document.querySelectorAll('.lead-cb').forEach(cb=>{cb.checked=el.checked;});updateBulkBar();}
+function updateBulkBar(){const checked=document.querySelectorAll('.lead-cb:checked');const bar=document.getElementById('bulkBar');const cnt=document.getElementById('bulkCount');if(checked.length>0){bar.style.display='inline-block';cnt.textContent=checked.length;}else{bar.style.display='none';}document.getElementById('selectAll').checked=checked.length>0&&checked.length===document.querySelectorAll('.lead-cb').length;}
+async function bulkDelete(){const checked=[...document.querySelectorAll('.lead-cb:checked')].map(cb=>cb.value);if(!checked.length)return;if(!confirm(checked.length+' ilan silinecek. Emin misiniz?'))return;const bar=document.getElementById('bulkBar');bar.innerHTML='⏳ Siliniyor...';bar.style.pointerEvents='none';let ok=0,fail=0;for(const id of checked){try{const r=await fetch('https://n8n.agentpartner.pro/webhook/fsbo-delete-lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ilan_id:id})});const j=await r.json();if(j.success)ok++;else fail++;}catch(e){fail++;}}bar.style.pointerEvents='';bar.style.display='none';bar.innerHTML='🗑️ <span id="bulkCount">0</span> ilan sil';document.getElementById('selectAll').checked=false;alert('✅ '+ok+' ilan silindi'+(fail?' ⚠️ '+fail+' hata':''));loadData();}
+function renderLeadCalls(ilanId){const calls=(allData.calls||[]).filter(c=>c.ilan_id===ilanId);if(!calls.length)return'<div class="detail-section"><div class="detail-section-title">📞 ARAMA GEÇMİŞİ</div><div style="font-size:12px;color:var(--text2);padding:8px">Henüz arama yapılmadı</div></div>';let rows=calls.map(c=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px;background:var(--surface2);border-radius:8px;margin-bottom:6px"><div><div style="font-size:12px;font-weight:600">${formatDate(c.created_at)}</div><div style="font-size:11px;color:var(--text2)">${formatDuration(c.sure_saniye)} • ${c.durum||'-'}</div></div><div style="display:flex;gap:6px">${c.recording_url?`<a href="${c.recording_url}" target="_blank" style="font-size:11px;color:var(--cyan);text-decoration:none">🎧 Dinle</a>`:''}</div></div>`).join('');return`<div class="detail-section"><div class="detail-section-title">📞 ARAMA GEÇMİŞİ (${calls.length})</div>${rows}</div>`;}
+async function autoSaveNotes(ilanId){const notlar=document.getElementById('detailNotlar').value;const geriArama=document.getElementById('detailGeriArama').value;const savedEl=document.getElementById('geriAramaSaved');try{const r=await fetch('https://n8n.agentpartner.pro/webhook/fsbo-update-status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ilan_id:ilanId,durum:document.getElementById('detailStatus').value,notlar:notlar,geri_arama_tarihi:geriArama||null})});const j=await r.json();if(j.success){if(savedEl){savedEl.style.opacity='1';setTimeout(()=>{savedEl.style.opacity='0';},2000);}loadData();}}catch(e){console.error(e);}}
+function renderGeriAramaUyari(leads){
+  const now=new Date();
+  const bekleyenler=leads.filter(l=>l.durum==='tekrar_aranacak').map(l=>{
+    const t=l.geri_arama_tarihi?new Date(l.geri_arama_tarihi):null;
+    const gecikme=t?Math.round((now-t)/60000):null;
+    return{...l,geriTarih:t,gecikme};
+  }).sort((a,b)=>{
+    if(!a.geriTarih&&!b.geriTarih)return 0;if(!a.geriTarih)return 1;if(!b.geriTarih)return -1;
+    return a.geriTarih-b.geriTarih;
+  });
+  const el=document.getElementById('geriAramaUyari');
+  if(!bekleyenler.length){el.style.display='none';return;}
+  const geciken=bekleyenler.filter(b=>b.gecikme!==null&&b.gecikme>0);
+  const yaklasan=bekleyenler.filter(b=>b.gecikme!==null&&b.gecikme<=0);
+  const tarihsiz=bekleyenler.filter(b=>b.gecikme===null);
+  let html='';
+  if(geciken.length){
+    html+=`<div style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:12px 16px;margin-bottom:8px">
+      <div style="font-weight:700;color:#ef4444;font-size:13px;margin-bottom:6px">🔴 ${geciken.length} ilan geri arama zamanı geçti!</div>
+      ${geciken.map(g=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+        <div style="cursor:pointer" onclick="openDetail(allData.leads.find(x=>x.ilan_id==='${g.ilan_id}'))"><strong style="color:var(--cyan)">${g.ilan_id}</strong> <span style="color:var(--text2);font-size:12px">${(g.ilan_sahibi||'-')} — ${(g.baslik||'').substring(0,35)}</span></div>
+        <div style="display:flex;gap:8px;align-items:center"><span style="color:#ef4444;font-size:11px;font-weight:600">${g.gecikme>60?Math.round(g.gecikme/60)+'s '+g.gecikme%60+'dk':g.gecikme+'dk'} gecikti</span>
+        ${g.notlar?`<span style="font-size:11px;color:var(--text2)" title="${g.notlar}">📝</span>`:''}<a href="tel:${g.telefon}" style="background:var(--green);color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none">📞 Ara</a></div>
+      </div>`).join('')}</div>`;
+  }
+  if(yaklasan.length){
+    html+=`<div style="background:rgba(251,146,60,.1);border:1px solid rgba(251,146,60,.25);border-radius:10px;padding:12px 16px;margin-bottom:8px">
+      <div style="font-weight:700;color:#fb923c;font-size:13px;margin-bottom:6px">🟠 ${yaklasan.length} ilan aranmayı bekliyor</div>
+      ${yaklasan.map(g=>{const dk=Math.abs(g.gecikme);const sure=dk>=60?Math.floor(dk/60)+'s '+(dk%60)+'dk':dk+'dk';return`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0">
+        <div style="cursor:pointer" onclick="openDetail(allData.leads.find(x=>x.ilan_id==='${g.ilan_id}'))"><strong style="color:var(--cyan)">${g.ilan_id}</strong> <span style="color:var(--text2);font-size:12px">${(g.ilan_sahibi||'-')} — ${(g.baslik||'').substring(0,35)}</span></div>
+        <div style="display:flex;gap:8px;align-items:center"><span style="color:#fb923c;font-size:11px;font-weight:600">${sure} sonra</span>
+        ${g.notlar?`<span style="font-size:11px;color:var(--text2)" title="${g.notlar}">📝</span>`:''}</div>
+      </div>`;}).join('')}</div>`;
+  }
+  if(tarihsiz.length){
+    html+=`<div style="background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.25);border-radius:10px;padding:12px 16px;margin-bottom:8px">
+      <div style="font-weight:700;color:#818cf8;font-size:13px;margin-bottom:6px">🔵 ${tarihsiz.length} ilan tekrar aranacak (tarih belirlenmemiş)</div>
+      ${tarihsiz.map(g=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0">
+        <div style="cursor:pointer" onclick="openDetail(allData.leads.find(x=>x.ilan_id==='${g.ilan_id}'))"><strong style="color:var(--cyan)">${g.ilan_id}</strong> <span style="color:var(--text2);font-size:12px">${(g.ilan_sahibi||'-')} — ${(g.baslik||'').substring(0,35)}</span></div>
+        <div>${g.notlar?`<span style="font-size:11px;color:var(--text2)">📝 ${g.notlar.substring(0,40)}</span>`:''}</div>
+      </div>`).join('')}</div>`;
+  }
+  el.innerHTML=html;el.style.display='block';
+}
+// ========== TOPLU ARAMA (BATCH CALLING) ==========
+let batchQueue=[], batchRunning=false, batchCancelled=false, batchCurrent=0, batchTotal=0, batchResults=[];
+
+function getCallableLeads(){
+  if(!allData||!allData.leads)return[];
+  return allData.leads.filter(l=>l.telefon && l.telefon!=='' && l.durum==='aranacak');
+}
+
+function openBatchCallModal(){
+  const leads=getCallableLeads();
+  const container=document.getElementById('batchLeadsList');
+  if(leads.length===0){
+    container.innerHTML='<div style="text-align:center;padding:32px;color:var(--text2)"><div style="font-size:48px;margin-bottom:12px">📭</div><p style="font-size:14px">Aranacak durumda ilan bulunamadı.</p><p style="font-size:12px;margin-top:8px">Durumu "📞 Aranacak" olan ilanlar burada görünür. İlanların durumunu değiştirmek için ilan detayından "Aranacak" seçin.</p></div>';
+    document.getElementById('batchStartBtn').disabled=true;
+    document.getElementById('batchStartBtn').style.opacity='0.5';
+  } else {
+    let html='<div style="margin-bottom:12px;font-size:13px;color:var(--text2)">Aşağıdaki <strong style="color:var(--orange)">'+leads.length+'</strong> ilan sırayla aranacak:</div>';
+    html+='<div style="max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:8px">';
+    html+='<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:var(--surface2)"><th style="padding:8px;text-align:left">İlan Sahibi</th><th style="padding:8px;text-align:left">Telefon</th><th style="padding:8px;text-align:left">Tip</th><th style="padding:8px;text-align:left">Konum</th><th style="padding:8px;text-align:left">Durum</th></tr></thead><tbody>';
+    leads.forEach(l=>{
+      html+='<tr style="border-top:1px solid var(--border)"><td style="padding:8px">'+(l.ilan_sahibi||'-')+'</td><td style="padding:8px">'+formatPhone(l.telefon)+'</td><td style="padding:8px">'+(l.mulk_tipi||'-')+'</td><td style="padding:8px">'+[l.il,l.ilce].filter(Boolean).join(', ')+'</td><td style="padding:8px"><span class="badge badge-'+(l.durum||'yeni')+'">'+(l.durum||'yeni')+'</span></td></tr>';
+    });
+    html+='</tbody></table></div>';
+    container.innerHTML=html;
+    document.getElementById('batchStartBtn').disabled=false;
+    document.getElementById('batchStartBtn').style.opacity='1';
+  }
+  document.getElementById('batchModal').style.display='flex';
+}
+
+function closeBatchModal(){document.getElementById('batchModal').style.display='none';}
+
+async function startBatchCall(){
+  const leads=getCallableLeads();
+  if(leads.length===0){alert('Aranacak lead bulunamadı');return;}
+  const delay=parseInt(document.getElementById('batchDelay').value)||120;
+  
+  if(!confirm('📞 Toplam '+leads.length+' kişi aranacak.\nAramalar arası '+delay+' saniye bekleme olacak.\n\nTahmini süre: ~'+(Math.ceil(leads.length*delay/60))+' dakika\n\nDevam etmek istiyor musunuz?'))return;
+  
+  closeBatchModal();
+  batchQueue=leads.map(l=>({ilan_id:l.ilan_id,ilan_sahibi:l.ilan_sahibi,telefon:l.telefon}));
+  batchTotal=batchQueue.length;
+  batchCurrent=0;
+  batchRunning=true;
+  batchCancelled=false;
+  batchResults=[];
+  
+  // Progress bar göster
+  document.getElementById('batchProgress').style.display='block';
+  updateBatchProgress();
+  
+  for(let i=0;i<batchQueue.length;i++){
+    if(batchCancelled)break;
+    batchCurrent=i+1;
+    const lead=batchQueue[i];
+    
+    document.getElementById('batchStatusText').textContent='📞 Aranıyor: '+(lead.ilan_sahibi||lead.ilan_id)+' ('+batchCurrent+'/'+batchTotal+')';
+    updateBatchProgress();
+    
+    try{
+      const res=await fetch(CALL_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ilan_id:lead.ilan_id})});
+      const data=await res.json();
+      batchResults.push({ilan_id:lead.ilan_id,success:!!(data.success||data.call_id),message:data.message||''});
+    }catch(e){
+      batchResults.push({ilan_id:lead.ilan_id,success:false,message:e.message});
+    }
+    
+    updateBatchProgress();
+    
+    // Son arama değilse bekle
+    if(i<batchQueue.length-1 && !batchCancelled){
+      document.getElementById('batchStatusText').textContent='⏳ Sonraki arama için bekleniyor... ('+(lead.ilan_sahibi||'')+' arandı)';
+      await batchWait(delay);
+    }
+  }
+  
+  batchRunning=false;
+  const basarili=batchResults.filter(r=>r.success).length;
+  const basarisiz=batchResults.filter(r=>!r.success).length;
+  
+  if(batchCancelled){
+    document.getElementById('batchStatusText').textContent='⏹ Toplu arama durduruldu. '+batchCurrent+'/'+batchTotal+' arandı (✅'+basarili+' ❌'+basarisiz+')';
+  } else {
+    document.getElementById('batchStatusText').textContent='✅ Toplu arama tamamlandı! '+batchTotal+' arandı (✅'+basarili+' ❌'+basarisiz+')';
+    document.getElementById('batchProgressBar').style.width='100%';
+    document.getElementById('batchProgressBar').style.background='var(--green)';
+  }
+  document.getElementById('batchEta').textContent='';
+  document.getElementById('batchDetail').textContent=basarili+' başarılı, '+basarisiz+' başarısız';
+  
+  // 10 saniye sonra progress bar'ı gizle
+  setTimeout(()=>{
+    if(!batchRunning)document.getElementById('batchProgress').style.display='none';
+    loadData();
+  },10000);
+  
+  await loadData();
+}
+
+function updateBatchProgress(){
+  const pct=batchTotal>0?Math.round((batchCurrent/batchTotal)*100):0;
+  document.getElementById('batchProgressBar').style.width=pct+'%';
+  document.getElementById('batchDetail').textContent=batchCurrent+'/'+batchTotal+' arandı';
+  const kalan=batchTotal-batchCurrent;
+  const delay=parseInt(document.getElementById('batchDelay').value)||120;
+  if(kalan>0){
+    const dakika=Math.ceil(kalan*delay/60);
+    document.getElementById('batchEta').textContent='Kalan: ~'+dakika+' dk ('+kalan+' arama)';
+  } else {
+    document.getElementById('batchEta').textContent='';
+  }
+}
+
+function batchWait(seconds){
+  return new Promise(resolve=>{
+    let remaining=seconds;
+    const interval=setInterval(()=>{
+      if(batchCancelled||remaining<=0){clearInterval(interval);resolve();return;}
+      remaining--;
+      document.getElementById('batchEta').textContent='Sonraki arama: '+remaining+'s | Kalan: '+(batchTotal-batchCurrent)+' arama';
+    },1000);
+    setTimeout(()=>{clearInterval(interval);resolve();},seconds*1000);
+  });
+}
+
+function cancelBatchCall(){
+  if(!batchRunning)return;
+  if(!confirm('⏹ Toplu aramayı durdurmak istediğinize emin misiniz?\n\nDevam eden arama tamamlanacak ama yeni arama başlamayacak.'))return;
+  batchCancelled=true;
+}
+// ========== TOPLU ARAMA SONU ==========
+
+</script>
+<!-- TOPLU ARAMA MODAL -->
+<div class="modal-overlay" id="batchModal" onclick="if(event.target===this)closeBatchModal()" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:1000;display:none;align-items:center;justify-content:center">
+<div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;width:560px;max-width:95vw;max-height:85vh;overflow:hidden;display:flex;flex-direction:column">
+<div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+<h2 style="font-size:18px;font-weight:700">📞 Toplu Arama</h2>
+<button onclick="closeBatchModal()" style="background:none;border:none;color:var(--text2);font-size:24px;cursor:pointer">&times;</button>
+</div>
+<div style="padding:20px;overflow-y:auto;flex:1">
+<div id="batchLeadsList" style="margin-bottom:16px"></div>
+<div style="display:flex;gap:12px;align-items:center;margin-bottom:16px">
+<label style="font-size:13px;color:var(--text2);white-space:nowrap">Aramalar arası bekleme:</label>
+<select id="batchDelay" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:8px;font-size:13px">
+<option value="60">1 dakika</option>
+<option value="120" selected>2 dakika</option>
+<option value="180">3 dakika</option>
+<option value="300">5 dakika</option>
+</select>
+</div>
+</div>
+<div style="padding:16px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end">
+<button onclick="closeBatchModal()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 20px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px">İptal</button>
+<button id="batchStartBtn" onclick="startBatchCall()" style="background:var(--orange);border:none;color:#000;padding:8px 24px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700">🚀 Aramayı Başlat</button>
+</div>
+</div>
+</div>
+</body>
+</html>

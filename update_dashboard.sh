@@ -1,0 +1,1 @@
+cd /opt/emlak-dashboard && sed -i 's/Royal Emlak/Nexus Realty/g; s/<div class="logo">R</<div class="logo">N</g; s/Royal <span>Emlak<\/span>/Nexus <span>Realty<\/span>/g' index.html && grep -n "Nexus\|Royal" index.html

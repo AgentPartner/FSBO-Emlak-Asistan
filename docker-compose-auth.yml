@@ -1,0 +1,27 @@
+services:
+  emlak-dashboard:
+    image: nginx:alpine
+    container_name: emlak-dashboard
+    restart: unless-stopped
+    volumes:
+      - /opt/emlak-dashboard/index.html:/usr/share/nginx/html/index.html:ro
+    networks:
+      - coolify
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.emlak-http.rule=Host(`emlak.agentpartner.pro`)
+      - traefik.http.routers.emlak-http.entrypoints=http
+      - traefik.http.routers.emlak-http.middlewares=redirect-to-https
+      - traefik.http.routers.emlak-https.rule=Host(`emlak.agentpartner.pro`)
+      - traefik.http.routers.emlak-https.entrypoints=https
+      - traefik.http.routers.emlak-https.tls=true
+      - traefik.http.routers.emlak-https.tls.certresolver=letsencrypt
+      - traefik.http.routers.emlak-https.middlewares=emlak-auth
+      - traefik.http.services.emlak-svc.loadbalancer.server.port=80
+      - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
+      - traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true
+      - traefik.http.middlewares.emlak-auth.basicauth.users=admin:$$apr1$$dxgdK6ik$$QT1F/c32H6nlWYWXfRLow/
+
+networks:
+  coolify:
+    external: true

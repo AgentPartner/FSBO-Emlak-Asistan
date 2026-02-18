@@ -1,0 +1,4 @@
+INSERT INTO fsbo_call_logs (call_id, ilan_id, ilan_sahibi, telefon, baslik, sure_saniye, maliyet, durum, ozet, transcript, recording_url, randevu_alindi, tekrar_ara, created_at) 
+VALUES ('019c6def-3b47-7bbc-b241-0c550f73dcf6', 'SAH-459446', 'Nese Tegmen', '+905314345758', 'Memurdan Satlik 3.5+1 Daire-Avenir', 93, 0.1659, 'Randevu alindi', 'Randevu alindi', 'Merhaba ben Beyda, Royal Emlak ariyorum. Nese Hanim ile mi gorusuyorum? - Sesim geliyor mu? - Evet sesiniz geliyor. - Gorusme tamamlandi, randevu alindi.', 'https://storage.vapi.ai/019c6def-3b47-7bbc-b241-0c550f73dcf6-1771371027173-2b06073a-4bda-426c-bba7-6bab5f48e4b3-mono.wav', true, false, '2026-02-17T23:28:51.309Z')
+ON CONFLICT (call_id) DO UPDATE SET sure_saniye = EXCLUDED.sure_saniye, ozet = EXCLUDED.ozet, transcript = EXCLUDED.transcript, recording_url = EXCLUDED.recording_url;
+UPDATE fsbo_leads SET durum = 'randevu', son_arama = NOW() WHERE ilan_id = 'SAH-459446';
