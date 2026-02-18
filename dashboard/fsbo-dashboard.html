@@ -254,7 +254,16 @@ tbody tr{transition:background .15s;cursor:pointer}tbody tr:hover{background:var
         <div class="report-stats" id="reportStats"></div>
       </div>
       <div class="report-block">
-        <h3>📈 Son 14 Gün <span>Günlük Arama &amp; Randevu Trendi</span></h3>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <h3>📈 Arama &amp; Randevu Trendi</h3>
+          <div class="period-tabs" id="trendPeriodTabs">
+            <button class="period-tab" onclick="setTrendPeriod(7,this)">7 Gün</button>
+            <button class="period-tab active" onclick="setTrendPeriod(14,this)">14 Gün</button>
+            <button class="period-tab" onclick="setTrendPeriod(30,this)">30 Gün</button>
+            <button class="period-tab" onclick="setTrendPeriod(90,this)">3 Ay</button>
+            <button class="period-tab" onclick="setTrendPeriod(0,this)">Tümü</button>
+          </div>
+        </div>
         <div class="chartjs-container"><canvas id="trendCanvas"></canvas></div>
       </div>
       <div class="report-block">
@@ -890,6 +899,13 @@ function renderReport(){
 }
 let trendChartInstance=null;
 let pieChartInstance=null;
+let trendDays=14;
+function setTrendPeriod(days,el){
+  trendDays=days;
+  document.querySelectorAll('#trendPeriodTabs .period-tab').forEach(b=>b.classList.remove('active'));
+  if(el)el.classList.add('active');
+  renderTrendChart();
+}
 function renderTrendChart(){
   const canvas=document.getElementById('trendCanvas');
   if(!canvas)return;
@@ -898,7 +914,16 @@ function renderTrendChart(){
     canvas.parentElement.innerHTML='<div class="report-empty">Henüz trend verisi yok<br><span style="font-size:11px">Aramalar başladığında burada günlük grafik görünecek</span></div>';
     return;
   }
-  const data=allData.report.gunluk_trend;
+  let data=allData.report.gunluk_trend;
+  if(trendDays>0){
+    const cutoff=new Date();cutoff.setDate(cutoff.getDate()-trendDays);
+    data=data.filter(d=>new Date(d.tarih)>=cutoff);
+  }
+  if(!data.length){
+    if(trendChartInstance){trendChartInstance.destroy();trendChartInstance=null;}
+    canvas.parentElement.innerHTML='<div class="chartjs-container"><canvas id="trendCanvas"></canvas></div>';
+    return;
+  }
   const labels=data.map(d=>{const dt=new Date(d.tarih);return dt.toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit'});});
   const aramaData=data.map(d=>d.arama);
   const randevuData=data.map(d=>d.randevu);
@@ -911,13 +936,13 @@ function renderTrendChart(){
   trendChartInstance=new Chart(ctx,{
     type:'line',
     data:{labels,datasets:[
-      {label:'Arama',data:aramaData,borderColor:'#3b82f6',backgroundColor:aramaGrad,fill:true,tension:.4,borderWidth:2.5,pointRadius:4,pointHoverRadius:7,pointBackgroundColor:'#3b82f6',pointBorderColor:'#111827',pointBorderWidth:2},
-      {label:'Randevu',data:randevuData,borderColor:'#10b981',backgroundColor:randevuGrad,fill:true,tension:.4,borderWidth:2.5,pointRadius:4,pointHoverRadius:7,pointBackgroundColor:'#10b981',pointBorderColor:'#111827',pointBorderWidth:2}
+      {label:'Arama',data:aramaData,borderColor:'#3b82f6',backgroundColor:aramaGrad,fill:true,tension:.4,borderWidth:2.5,pointRadius:data.length>30?2:4,pointHoverRadius:7,pointBackgroundColor:'#3b82f6',pointBorderColor:'#111827',pointBorderWidth:2},
+      {label:'Randevu',data:randevuData,borderColor:'#10b981',backgroundColor:randevuGrad,fill:true,tension:.4,borderWidth:2.5,pointRadius:data.length>30?2:4,pointHoverRadius:7,pointBackgroundColor:'#10b981',pointBorderColor:'#111827',pointBorderWidth:2}
     ]},
     options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
       plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',font:{family:'Plus Jakarta Sans',size:11,weight:'600'},usePointStyle:true,pointStyle:'circle',padding:16}},
         tooltip:{backgroundColor:'#1a2235',titleColor:'#e2e8f0',bodyColor:'#94a3b8',borderColor:'#1e293b',borderWidth:1,padding:10,cornerRadius:8,titleFont:{family:'Plus Jakarta Sans',weight:'700'},bodyFont:{family:'Plus Jakarta Sans'}}},
-      scales:{x:{grid:{color:'rgba(30,41,59,0.5)',drawBorder:false},ticks:{color:'#64748b',font:{family:'Plus Jakarta Sans',size:10}}},
+      scales:{x:{grid:{color:'rgba(30,41,59,0.5)',drawBorder:false},ticks:{color:'#64748b',font:{family:'Plus Jakarta Sans',size:10},maxTicksLimit:data.length>30?10:15}},
         y:{beginAtZero:true,grid:{color:'rgba(30,41,59,0.5)',drawBorder:false},ticks:{color:'#64748b',font:{family:'Plus Jakarta Sans',size:10},stepSize:1}}}
     }
   });
